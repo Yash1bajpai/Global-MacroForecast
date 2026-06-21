@@ -29,3 +29,6 @@ temp/
 .idea/
 .DS_Store
 Thumbs.db
+
+# AI Context Files
+project_context_prompt.txt
