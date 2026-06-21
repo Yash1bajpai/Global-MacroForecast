@@ -1,0 +1,31 @@
+# Python Virtual Environment
+.venv/
+venv/
+env/
+
+# Python Cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Environment Variables (Secrets)
+.env
+.env.local
+
+# Logs
+logs/
+*.log
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+
+# Temporary Scripts
+tmp_hist.py
+update_js.py
+temp/
+
+# IDE / OS Files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,5 @@
+country,sarima_rmse,lgbm_rmse,ensemble_rmse,ensemble_mae,w_sarima,w_lgbm
+US,2.3628,2.2632,2.3009,1.1249,0.489,0.511
+JAPAN,1.8739,1.6332,1.732,0.9568,0.466,0.534
+GERMANY,2.591,2.5069,2.5408,1.0975,0.492,0.508
+INDIA,skipped,4.6015,4.6015,2.7392,0.0,1.0
