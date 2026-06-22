@@ -16,16 +16,18 @@ __pycache__/
 logs/
 *.log
 
-# Data & Models (generated artifacts — do not version control)
-data/
+# Models — binary files, regenerate via training scripts
 models_saved/
 
-# Jupyter Notebooks
+# Jupyter Notebook checkpoints
 .ipynb_checkpoints/
 
-# Temporary Scripts
+# Temporary / One-off Scripts
 tmp_hist.py
 update_js.py
+fix_notebook.py
+clean_notebook.py
+test_india_depth.py
 temp/
 
 # IDE / OS Files
