@@ -7,6 +7,12 @@ Format: **What changed → Why it was changed → Issue it solved.**
 
 ## [1.2.0] — 2026-06-22
 
+### Added
+- **Optuna Hyperparameter Tuning Notebook** (`kaggle_optuna_tuning.ipynb`)
+  - *Why:* To systematically find the optimal LightGBM parameters (`n_estimators`, `learning_rate`, `max_depth`, `num_leaves`) for each of the 4 countries without relying on generic defaults.
+  - *Result:* Test RMSE reduced across all countries without overfitting: Japan (12.7% improvement), Germany (10.0%), India (6.8%), US (4.8%). Search space was explicitly narrowed (`max_depth=3-6`) to respect the small ~100-row dataset size.
+
+
 ### Changed
 - **README title fixed:** "National Economic Intelligence" → "Global MacroForecast"
   - *Why:* The project covers 4 global economies (US, India, Japan, Germany). "National" was a misnomer. Repository is named `Global-MacroForecast` so the README title must match.
