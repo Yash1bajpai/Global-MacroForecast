@@ -559,8 +559,8 @@ function drawChart(data) {
     }
 
     const gradientBlue = ctx.createLinearGradient(0, 0, 0, 400);
-    gradientBlue.addColorStop(0, "rgba(59, 130, 246, 0.4)");
-    gradientBlue.addColorStop(1, "rgba(59, 130, 246, 0.0)");
+    gradientBlue.addColorStop(0, "rgba(30, 64, 175, 0.2)"); // Navy blue accent
+    gradientBlue.addColorStop(1, "rgba(30, 64, 175, 0.0)");
 
     chartInstance = new Chart(ctx, {
         type: "line",
@@ -570,11 +570,11 @@ function drawChart(data) {
                 {
                     label: "Historical GDP",
                     data: historyData,
-                    borderColor: "#3b82f6",
+                    borderColor: "#1E40AF",
                     backgroundColor: gradientBlue,
                     borderWidth: 2,
-                    pointBackgroundColor: "#070B14",
-                    pointBorderColor: "#3b82f6",
+                    pointBackgroundColor: "#FFFFFF",
+                    pointBorderColor: "#1E40AF",
                     pointRadius: 4,
                     fill: true,
                     tension: 0.4
@@ -582,10 +582,10 @@ function drawChart(data) {
                 {
                     label: "Forecast",
                     data: forecastData,
-                    borderColor: "#f59e0b",
+                    borderColor: "#D97706",
                     borderWidth: 2,
                     borderDash: [5, 5],
-                    pointBackgroundColor: "#f59e0b",
+                    pointBackgroundColor: "#D97706",
                     pointRadius: 4,
                     fill: false,
                     tension: 0.4
@@ -600,27 +600,27 @@ function drawChart(data) {
                 tooltip: {
                     mode: "index",
                     intersect: false,
-                    backgroundColor: "rgba(18, 24, 38, 0.9)",
-                    titleColor: "#94a3b8",
-                    bodyColor: "#f8fafc",
-                    borderColor: "rgba(255,255,255,0.1)",
+                    backgroundColor: "rgba(15, 23, 42, 0.9)", // Slate 900
+                    titleColor: "#F8FAFC",
+                    bodyColor: "#E2E8F0",
+                    borderColor: "rgba(0,0,0,0.1)",
                     borderWidth: 1,
                     padding: 12
                 }
             },
             scales: {
                 x: {
-                    grid: { color: "rgba(255, 255, 255, 0.05)", drawBorder: false },
-                    ticks: { color: "#94a3b8", maxTicksLimit: 12 }
+                    grid: { color: "rgba(0, 0, 0, 0.05)", drawBorder: false },
+                    ticks: { color: "#475569", maxTicksLimit: 12 } // Slate 600
                 },
                 y: {
                     grid: {
-                        color: (context) => context.tick.value === 0 ? "rgba(255, 255, 255, 0.2)" : "rgba(255, 255, 255, 0.05)",
+                        color: (context) => context.tick.value === 0 ? "rgba(0, 0, 0, 0.2)" : "rgba(0, 0, 0, 0.05)",
                         lineWidth: (context) => context.tick.value === 0 ? 2 : 1,
                         drawBorder: false
                     },
                     ticks: {
-                        color: "#94a3b8",
+                        color: "#475569",
                         callback: function(value) { return value + "%"; }
                     }
                 }
@@ -630,6 +630,37 @@ function drawChart(data) {
     });
 }
 
+// --- FLOATING PARTICLES LOGIC ---
+function initParticles() {
+    const container = document.getElementById('particles-container');
+    if (!container) return;
+
+    const symbols = ['%', '📈', '$', '€', '¥', '₹', '📉'];
+    const particleCount = 20;
+
+    for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'econ-particle';
+        
+        // Random symbol
+        particle.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+        
+        // Random position, size, and animation duration
+        const size = Math.random() * 2 + 1; // 1rem to 3rem
+        const left = Math.random() * 100; // 0% to 100%
+        const duration = Math.random() * 20 + 15; // 15s to 35s
+        const delay = Math.random() * 20; // 0s to 20s
+
+        particle.style.fontSize = `${size}rem`;
+        particle.style.left = `${left}vw`;
+        particle.style.animationDuration = `${duration}s`;
+        particle.style.animationDelay = `-${delay}s`; // Start mid-animation
+
+        container.appendChild(particle);
+    }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     initializeCards();
+    initParticles();
 });

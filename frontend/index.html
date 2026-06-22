@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="National Economic Intelligence — an ensemble ML GDP Nowcasting engine forecasting Quarter-on-Quarter GDP growth for the US, Germany, Japan, and India up to 8 quarters ahead.">
-    <title>EconEngine | Macroeconomic GDP Forecasting</title>
+    <meta name="description" content="Global MacroForecast — an ensemble ML GDP Nowcasting engine forecasting Quarter-on-Quarter GDP growth for the US, Germany, Japan, and India up to 8 quarters ahead.">
+    <title>Global MacroForecast | GDP Predictions</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,14 +16,14 @@
 </head>
 <body>
 
-    <!-- Floating Hexagon Background -->
-    <div class="bg-pattern"></div>
+    <!-- Floating Economic Particles Background -->
+    <div id="particles-container"></div>
 
     <!-- Sticky Top Navbar -->
     <nav class="top-nav">
         <div class="logo">
             <span class="logo-icon">📈</span>
-            <h2>Econ<span class="accent">Engine</span></h2>
+            <h2>Macro<span class="accent">Forecast</span></h2>
         </div>
         <div class="toggle-container">
             <label class="switch">
@@ -40,10 +40,10 @@
         <!-- Hero Section -->
         <header class="hero-section">
             <div class="tagline">✦ ENSEMBLE MACHINE LEARNING ONLINE</div>
-            <h1 class="hero-title">National Economic<br>Intelligence</h1>
+            <h1 class="hero-title">Global MacroForecast</h1>
             <p class="hero-desc">
                 Up to 8-Quarter GDP Growth forecasts for 4 major economies, powered by an ensemble of <br>
-                LightGBM & SARIMA models trained on decades of macroeconomic indicators.
+                Optuna-tuned LightGBM & SARIMA models trained on decades of macroeconomic indicators.
             </p>
             
             <div class="hero-stats">
@@ -52,7 +52,7 @@
                     <p class="stat-label">Economies</p>
                 </div>
                 <div class="stat-item">
-                    <h2 class="stat-value">20+</h2>
+                    <h2 class="stat-value">40+</h2>
                     <p class="stat-label">Features Used</p>
                 </div>
                 <div class="stat-item">
@@ -216,9 +216,9 @@
                     <h4>The Ensemble Approach</h4>
                     <p class="acc-text">We utilize a dynamically weighted ensemble of two distinct architectures:</p>
                     <ul class="acc-list">
-                        <li><strong>LightGBM (Tree-based):</strong> Captures complex non-linear relationships and interactions between macro indicators (e.g., Interest Rates x CPI).</li>
+                        <li><strong>LightGBM (Tree-based):</strong> Captures complex non-linear relationships and interactions between macro indicators (e.g., Interest Rates x CPI). Hyperparameters optimized via Optuna.</li>
                         <li><strong>SARIMA (Statistical):</strong> Captures the fundamental linear trend and seasonality of the GDP series.</li>
-                        <li><strong>Inverse Variance Weighting:</strong> The final forecast favors the model with the lowest historical error for that specific country.</li>
+                        <li><strong>Inverse RMSE Weighting:</strong> The final forecast dynamically favors the model with the lowest historical Root Mean Square Error.</li>
                     </ul>
                 </div>
             </div>
@@ -268,9 +268,9 @@
     <footer class="site-footer">
         <div class="footer-content">
             <div class="footer-left">
-                <h3>EconEngine</h3>
+                <h3>Global MacroForecast</h3>
                 <p>GDP Nowcasting Ensemble Architecture</p>
-                <p class="copyright">© 2026 EconEngine Intelligence. All rights reserved.</p>
+                <p class="copyright">© 2026 Yash Bajpai. All rights reserved.</p>
             </div>
             <div class="footer-right">
                 <p>Built by <strong>Yash Bajpai</strong></p>
