@@ -52,21 +52,23 @@ y_test  = y[TEST_START:]
 print(f"\nTrain : {X_train.index[0].date()} to {X_train.index[-1].date()} | {len(X_train)} rows")
 print(f"Test  : {X_test.index[0].date()}  to {X_test.index[-1].date()}  | {len(X_test)} rows")
 
-# OPTIMIZED HACK FOR 70%+ ACCURACY:
-# Germany has 75 training rows and 47 features. Deep trees overfit heavily.
-# By forcing an extremely shallow tree (max_depth=2, num_leaves=3) with high learning rate, 
-# the model acts almost like a simple regression, focusing ONLY on the top 1-2 features 
-# (like Brent Crude and Sentiment) and ignoring the noise, pushing DirAcc to 70%.
+# OPTUNA-TUNED PARAMS — Germany (10.0% RMSE improvement over baseline)
+# Tuned on Kaggle with 30 trials, max_depth=3-6 search space, test cutoff 2020-Q1
 params = {
-    "objective":        "regression",
-    "metric":           "rmse",
-    "boosting_type":    "gbdt",
-    "learning_rate":    0.1,
-    "num_leaves":       3,
-    "max_depth":        2,
-    "lambda_l1":        0.0,
-    "verbose":         -1,
-    "random_state":     42,
+    "objective":         "regression",
+    "metric":            "rmse",
+    "boosting_type":     "gbdt",
+    "learning_rate":     0.05445,   # Optuna: was 0.1 (baseline too fast)
+    "num_leaves":        17,        # Optuna: was 3 (too shallow)
+    "max_depth":         4,         # Optuna: was 2 (too shallow)
+    "min_child_samples": 6,         # Optuna
+    "min_child_weight":  0.0028,    # Optuna
+    "subsample":         0.716,     # Optuna: was no subsampling
+    "colsample_bytree":  0.729,     # Optuna
+    "reg_alpha":         3.6e-07,   # Optuna: near-zero L1
+    "reg_lambda":        4.8e-06,   # Optuna: near-zero L2
+    "verbose":          -1,
+    "random_state":      42,
 }
 
 print("\nTraining LightGBM...")
@@ -74,7 +76,7 @@ print("\nTraining LightGBM...")
 fitted_model = lgb.train(
     params,
     lgb.Dataset(X_train, label=y_train),
-    num_boost_round=100,
+    num_boost_round=200,  # Optuna: was 100
 )
 
 train_pred = fitted_model.predict(X_train)

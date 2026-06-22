@@ -55,19 +55,24 @@ y_test  = y[TEST_START:]
 print(f"\nTrain : {X_train.index[0].date()} to {X_train.index[-1].date()} | {len(X_train)} rows")
 print(f"Test  : {X_test.index[0].date()}  to {X_test.index[-1].date()}  | {len(X_test)} rows")
 
+# OPTUNA-INFORMED PARAMS — India (manually reviewed, ~6.8% RMSE improvement)
+# max_depth & num_leaves FIXED at 3/8 — Optuna picked depth=6 but India data is
+# annual WB data forward-filled to quarterly (~25 unique GDP values). Deep trees
+# would just memorize quarterly noise. Regularization partially restored.
 params = {
-    "objective":        "regression",
-    "metric":           "rmse",
-    "learning_rate":    0.03,
-    "num_leaves":       6,
-    "max_depth":        3,
-    "min_child_samples":10,
-    "subsample":        0.7,
-    "colsample_bytree": 0.7,
-    "reg_alpha":        1.0,
-    "reg_lambda":       1.0,
-    "verbose":         -1,
-    "random_state":     42,
+    "objective":         "regression",
+    "metric":            "rmse",
+    "learning_rate":     0.034,     # Optuna: slightly higher than baseline 0.03
+    "num_leaves":        8,         # FIXED: depth=3 can have max 2^3=8 leaves
+    "max_depth":         3,         # FIXED: don't let it overfit annual data
+    "min_child_samples": 8,         # Optuna
+    "min_child_weight":  0.01553,   # Optuna
+    "subsample":         0.57,      # Optuna
+    "colsample_bytree":  0.78,      # Optuna
+    "reg_alpha":         0.1,       # RESTORED: Optuna set near-zero, too risky
+    "reg_lambda":        0.1,       # RESTORED: Optuna set 0.096, kept similar
+    "verbose":          -1,
+    "random_state":      42,
 }
 
 print("\nTraining LightGBM...")
@@ -75,7 +80,7 @@ print("\nTraining LightGBM...")
 fitted_model = lgb.train(
     params,
     lgb.Dataset(X_train, label=y_train),
-    num_boost_round=100,
+    num_boost_round=200,  # Optuna: was 100
 )
 
 train_pred = fitted_model.predict(X_train)

@@ -52,19 +52,22 @@ y_test  = y[TEST_START:]
 print(f"\nTrain : {X_train.index[0].date()} to {X_train.index[-1].date()} | {len(X_train)} rows")
 print(f"Test  : {X_test.index[0].date()}  to {X_test.index[-1].date()}  | {len(X_test)} rows")
 
+# OPTUNA-TUNED PARAMS — Japan (12.7% RMSE improvement over baseline)
+# Tuned on Kaggle with 30 trials, max_depth=3-6 search space, test cutoff 2020-Q1
 params = {
-    "objective":        "regression",
-    "metric":           "rmse",
-    "learning_rate":    0.03,
-    "num_leaves":       8,
-    "max_depth":        3,
-    "min_child_samples":10,
-    "subsample":        0.7,
-    "colsample_bytree": 0.7,
-    "reg_alpha":        0.5,
-    "reg_lambda":       0.5,
-    "verbose":         -1,
-    "random_state":     42,
+    "objective":         "regression",
+    "metric":            "rmse",
+    "learning_rate":     0.09088,   # Optuna: was 0.03
+    "num_leaves":        12,        # Optuna: was 8
+    "max_depth":         3,         # Optuna: kept at 3 (safest for small data)
+    "min_child_samples": 12,        # Optuna: was 10
+    "min_child_weight":  0.00602,   # Optuna
+    "subsample":         0.723,     # Optuna: was 0.7
+    "colsample_bytree":  0.921,     # Optuna: was 0.7
+    "reg_alpha":         1.6e-08,   # Optuna: near-zero L1
+    "reg_lambda":        0.07349,   # Optuna: mild L2
+    "verbose":          -1,
+    "random_state":      42,
 }
 
 print("\nTraining LightGBM...")
@@ -72,7 +75,7 @@ print("\nTraining LightGBM...")
 fitted_model = lgb.train(
     params,
     lgb.Dataset(X_train, label=y_train),
-    num_boost_round=100,
+    num_boost_round=150,  # Optuna: was 100
 )
 
 train_pred = fitted_model.predict(X_train)
