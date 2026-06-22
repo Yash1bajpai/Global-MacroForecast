@@ -42,17 +42,17 @@ body {
 .econ-particle {
     position: absolute;
     color: var(--accent);
-    opacity: 0.15; /* Increased base opacity */
+    opacity: 0.15;
     font-weight: 700;
     user-select: none;
-    animation: floatUp linear infinite;
+    top: 0; left: 0;
+    transition: opacity 0.3s ease, color 0.3s ease, transform 0.1s linear;
 }
 
-@keyframes floatUp {
-    0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
-    10% { opacity: 0.3; } /* Increased active opacity */
-    90% { opacity: 0.3; } /* Increased active opacity */
-    100% { transform: translateY(-100px) rotate(360deg); opacity: 0; }
+.econ-particle:hover {
+    opacity: 0.8;
+    color: var(--accent-hover);
+    cursor: default;
 }
 
 /* Top Nav */
@@ -197,7 +197,7 @@ input:checked + .slider:before { transform: translateX(18px); }
     display: flex;
     flex-direction: column;
     gap: 20px;
-    transition: all 0.3s ease;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Bouncy hover transition */
     cursor: pointer;
     position: relative;
     overflow: hidden;
@@ -214,8 +214,9 @@ input:checked + .slider:before { transform: translateX(18px); }
 }
 
 .country-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 15px 35px rgba(30, 64, 175, 0.1);
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 20px 40px rgba(30, 64, 175, 0.12);
+    border-color: var(--accent-hover);
 }
 
 .country-card:hover::before {

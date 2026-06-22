@@ -636,27 +636,47 @@ function initParticles() {
     if (!container) return;
 
     const symbols = ['%', '📈', '$', '€', '¥', '₹', '📉'];
-    const particleCount = 20;
+    const particleCount = 25; // Increased slightly
 
     for (let i = 0; i < particleCount; i++) {
         const particle = document.createElement('div');
         particle.className = 'econ-particle';
-        
-        // Random symbol
         particle.textContent = symbols[Math.floor(Math.random() * symbols.length)];
         
-        // Random position, size, and animation duration
-        const size = Math.random() * 2 + 1; // 1rem to 3rem
-        const left = Math.random() * 100; // 0% to 100%
-        const duration = Math.random() * 20 + 15; // 15s to 35s
-        const delay = Math.random() * 20; // 0s to 20s
-
+        const size = Math.random() * 2 + 1.5; // 1.5rem to 3.5rem
         particle.style.fontSize = `${size}rem`;
-        particle.style.left = `${left}vw`;
-        particle.style.animationDuration = `${duration}s`;
-        particle.style.animationDelay = `-${delay}s`; // Start mid-animation
-
+        
         container.appendChild(particle);
+
+        // Initial random position
+        let x = Math.random() * window.innerWidth;
+        let y = Math.random() * window.innerHeight;
+        
+        // Random velocity (drift)
+        let vx = (Math.random() - 0.5) * 1.2; 
+        let vy = (Math.random() - 0.5) * 1.2; 
+        
+        // Random rotation
+        let rot = Math.random() * 360;
+        let vRot = (Math.random() - 0.5) * 1.5;
+
+        function animate() {
+            x += vx;
+            y += vy;
+            rot += vRot;
+
+            // Bounce off edges (with a 100px buffer so they don't pop out abruptly)
+            if (x < -100) vx = Math.abs(vx);
+            if (x > window.innerWidth + 100) vx = -Math.abs(vx);
+            if (y < -100) vy = Math.abs(vy);
+            if (y > window.innerHeight + 100) vy = -Math.abs(vy);
+
+            particle.style.transform = `translate(${x}px, ${y}px) rotate(${rot}deg)`;
+            requestAnimationFrame(animate);
+        }
+        
+        // Start animation
+        animate();
     }
 }
 
