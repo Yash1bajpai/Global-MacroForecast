@@ -12,6 +12,8 @@ import pandas as pd
 from fredapi import Fred
 from datetime import datetime
 
+from tenacity import retry, stop_after_attempt, wait_exponential
+
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, PROJECT_ROOT)
 
@@ -34,6 +36,15 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+@retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
+def _fetch_single_series(fred: Fred, series_id: str):
+    return fred.get_series(
+        series_id,
+        observation_start=START_DATE,
+        observation_end=END_DATE,
+    )
+
+
 def fetch_country(fred: Fred, country: str, series_dict: dict) -> int:
     """Fetch all series for one country. Returns count of successful fetches."""
     out_dir = COUNTRY_RAW_DIRS[country]
@@ -42,11 +53,7 @@ def fetch_country(fred: Fred, country: str, series_dict: dict) -> int:
 
     for name, series_id in series_dict.items():
         try:
-            raw = fred.get_series(
-                series_id,
-                observation_start=START_DATE,
-                observation_end=END_DATE,
-            )
+            raw = _fetch_single_series(fred, series_id)
             df = raw.reset_index()
             df.columns = ["date", "value"]
             df["date"]  = pd.to_datetime(df["date"])

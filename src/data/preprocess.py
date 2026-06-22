@@ -71,7 +71,7 @@ def to_quarterly(series, method="mean"):
 def annual_to_quarterly(series):
     end = series.index.max() + pd.offsets.MonthEnd(12)
     q_idx = pd.date_range(series.index.min(), end, freq="QS")
-    return series.reindex(series.index.union(q_idx)).sort_index().ffill().reindex(q_idx)
+    return series.reindex(series.index.union(q_idx)).sort_index().ffill().bfill(limit=1).reindex(q_idx)
 
 
 def log_diff_pct(series):

@@ -1,4 +1,7 @@
-const USE_MOCK = true; // Set to false when backend is ready
+const USE_MOCK = false; // Set to true for offline UI development only
+
+// API configuration: override via env at build time, or fallback to localhost
+const API_BASE = window.API_BASE || "http://127.0.0.1:8000/api";
 
 // Standardized country names for UI
 const COUNTRY_TITLES = {
@@ -405,10 +408,8 @@ const MOCK_DATA = {
 };
 
 // --- GLOBAL VARIABLES ---
-let currentCountry = null; // No country selected by default
+let currentCountry = null;
 let chartInstance = null;
-const API_BASE = "http://127.0.0.1:8000/api";
-
 
 // --- DOM ELEMENTS ---
 const mockToggle = document.getElementById("mock-toggle");
@@ -416,29 +417,51 @@ const cards = document.querySelectorAll(".country-card");
 const chartWrapper = document.getElementById("chart-wrapper");
 const chartTitle = document.getElementById("chart-title");
 
+// --- SAFE DOM HELPER ---
+function clearElement(el) {
+    while (el.firstChild) {
+        el.removeChild(el.firstChild);
+    }
+}
+
+function setTrend(el, annRate, nextQtr) {
+    clearElement(el);
+    const baseText = document.createTextNode("Annualized ~" + annRate.toFixed(1) + "% ");
+    el.appendChild(baseText);
+
+    const span = document.createElement("span");
+    if (nextQtr > 0.2) {
+        span.className = "trend-up";
+        span.textContent = "▲ Expansion";
+    } else if (nextQtr < 0) {
+        span.className = "trend-down";
+        span.textContent = "▼ Contraction";
+    } else {
+        span.className = "trend-flat";
+        span.textContent = "▶ Stagnation";
+    }
+    el.appendChild(span);
+}
+
 // --- EVENT LISTENERS ---
 mockToggle.addEventListener("change", () => {
-    if(currentCountry) expandCard(currentCountry);
+    if (currentCountry) expandCard(currentCountry);
 });
 
 cards.forEach(card => {
     card.addEventListener("click", (e) => {
         const country = e.currentTarget.dataset.country;
-        
-        if(currentCountry === country) {
+
+        if (currentCountry === country) {
             collapseAll();
             return;
         }
-        
+
         currentCountry = country;
         cards.forEach(c => c.classList.remove("active"));
         e.currentTarget.classList.add("active");
-        
+
         chartTitle.textContent = COUNTRY_TITLES[country] + " - 8-Quarter Forecast";
-        
-        // Move the chart wrapper immediately AFTER the clicked card in the DOM (mobile responsive trick)
-        // or just keep it below the grid. Since our CSS puts it below the grid, we just unhide it.
-        
         expandCard(country);
     });
 });
@@ -464,14 +487,16 @@ async function fetchData(country) {
             fetch(API_BASE + "/metrics/" + country)
         ]);
 
-        if (!histRes.ok || !fcRes.ok || !metRes.ok) throw new Error("API Error");
+        if (!histRes.ok || !fcRes.ok || !metRes.ok) {
+            throw new Error("API returned non-OK status");
+        }
 
         const history = await histRes.json();
         const forecast = await fcRes.json();
         const metrics = await metRes.json();
         return { history, forecast, metrics };
     } catch (error) {
-        console.error("API failed, falling back to mock.");
+        console.error("API fetch failed:", error);
         mockToggle.checked = true;
         return MOCK_DATA[country];
     }
@@ -479,26 +504,24 @@ async function fetchData(country) {
 
 // --- INITIAL LOAD ---
 async function initializeCards() {
-    for (const c of ['us', 'germany', 'japan', 'india']) {
-        const data = await fetchData(c);
-        
-        const nextQtr = data.forecast[0].ensemble_pred;
-        const valEl = document.getElementById("val-" + c);
-        const trendEl = document.getElementById("trend-" + c);
-        const rmseEl = document.getElementById("rmse-" + c);
-        
-        valEl.textContent = (nextQtr > 0 ? '+' : '') + nextQtr.toFixed(2) + "%";
-        
-        const annRate = nextQtr * 4;
-        if (nextQtr > 0.2) {
-            trendEl.innerHTML = "Annualized ~" + annRate.toFixed(1) + "% <span class='trend-up'>▲ Expansion</span>";
-        } else if (nextQtr < 0) {
-            trendEl.innerHTML = "Annualized ~" + annRate.toFixed(1) + "% <span class='trend-down'>▼ Contraction</span>";
-        } else {
-            trendEl.innerHTML = "Annualized ~" + annRate.toFixed(1) + "% <span class='trend-flat'>▶ Stagnation</span>";
+    for (const c of ["us", "germany", "japan", "india"]) {
+        try {
+            const data = await fetchData(c);
+
+            const nextQtr = data.forecast[0].ensemble_pred;
+            const valEl = document.getElementById("val-" + c);
+            const trendEl = document.getElementById("trend-" + c);
+            const rmseEl = document.getElementById("rmse-" + c);
+
+            valEl.textContent = (nextQtr > 0 ? "+" : "") + nextQtr.toFixed(2) + "%";
+
+            const annRate = nextQtr * 4;
+            setTrend(trendEl, annRate, nextQtr);
+
+            rmseEl.textContent = data.metrics.ensemble_rmse.toFixed(2) + "%";
+        } catch (err) {
+            console.error("Failed to initialize card for " + c, err);
         }
-        
-        rmseEl.textContent = data.metrics.ensemble_rmse.toFixed(2) + "%";
     }
 }
 
@@ -506,24 +529,28 @@ async function initializeCards() {
 async function expandCard(country) {
     chartWrapper.classList.remove("hidden");
     chartWrapper.classList.add("visible");
-    
-    const data = await fetchData(country);
-    drawChart(data);
+
+    try {
+        const data = await fetchData(country);
+        drawChart(data);
+    } catch (err) {
+        console.error("Failed to expand card for " + country, err);
+    }
 }
 
 // --- CHART.JS ---
 function drawChart(data) {
-    const ctx = document.getElementById('gdpChart').getContext('2d');
+    const ctx = document.getElementById("gdpChart").getContext("2d");
 
     const histDates = Object.keys(data.history);
     const histValues = Object.values(data.history);
 
     const fcDates = data.forecast.map(d => d.date);
     const fcValues = data.forecast.map(d => d.ensemble_pred);
-    
+
     const allLabels = [...histDates, ...fcDates];
     const historyData = [...histValues, ...Array(fcDates.length).fill(null)];
-    
+
     const lastHistValue = histValues[histValues.length - 1];
     const forecastData = [...Array(histDates.length - 1).fill(null), lastHistValue, ...fcValues];
 
@@ -531,34 +558,34 @@ function drawChart(data) {
         chartInstance.destroy();
     }
 
-    let gradientBlue = ctx.createLinearGradient(0, 0, 0, 400);
-    gradientBlue.addColorStop(0, 'rgba(59, 130, 246, 0.4)');   
-    gradientBlue.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
+    const gradientBlue = ctx.createLinearGradient(0, 0, 0, 400);
+    gradientBlue.addColorStop(0, "rgba(59, 130, 246, 0.4)");
+    gradientBlue.addColorStop(1, "rgba(59, 130, 246, 0.0)");
 
     chartInstance = new Chart(ctx, {
-        type: 'line',
+        type: "line",
         data: {
             labels: allLabels,
             datasets: [
                 {
-                    label: 'Historical GDP',
+                    label: "Historical GDP",
                     data: historyData,
-                    borderColor: '#3b82f6',
+                    borderColor: "#3b82f6",
                     backgroundColor: gradientBlue,
                     borderWidth: 2,
-                    pointBackgroundColor: '#070B14',
-                    pointBorderColor: '#3b82f6',
+                    pointBackgroundColor: "#070B14",
+                    pointBorderColor: "#3b82f6",
                     pointRadius: 4,
                     fill: true,
                     tension: 0.4
                 },
                 {
-                    label: 'Forecast',
+                    label: "Forecast",
                     data: forecastData,
-                    borderColor: '#f59e0b',
+                    borderColor: "#f59e0b",
                     borderWidth: 2,
                     borderDash: [5, 5],
-                    pointBackgroundColor: '#f59e0b',
+                    pointBackgroundColor: "#f59e0b",
                     pointRadius: 4,
                     fill: false,
                     tension: 0.4
@@ -571,34 +598,34 @@ function drawChart(data) {
             plugins: {
                 legend: { display: false },
                 tooltip: {
-                    mode: 'index',
+                    mode: "index",
                     intersect: false,
-                    backgroundColor: 'rgba(18, 24, 38, 0.9)',
-                    titleColor: '#94a3b8',
-                    bodyColor: '#f8fafc',
-                    borderColor: 'rgba(255,255,255,0.1)',
+                    backgroundColor: "rgba(18, 24, 38, 0.9)",
+                    titleColor: "#94a3b8",
+                    bodyColor: "#f8fafc",
+                    borderColor: "rgba(255,255,255,0.1)",
                     borderWidth: 1,
                     padding: 12
                 }
             },
             scales: {
                 x: {
-                    grid: { color: 'rgba(255, 255, 255, 0.05)', drawBorder: false },
-                    ticks: { color: '#94a3b8', maxTicksLimit: 12 }
+                    grid: { color: "rgba(255, 255, 255, 0.05)", drawBorder: false },
+                    ticks: { color: "#94a3b8", maxTicksLimit: 12 }
                 },
                 y: {
-                    grid: { 
-                        color: (context) => context.tick.value === 0 ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.05)', 
+                    grid: {
+                        color: (context) => context.tick.value === 0 ? "rgba(255, 255, 255, 0.2)" : "rgba(255, 255, 255, 0.05)",
                         lineWidth: (context) => context.tick.value === 0 ? 2 : 1,
-                        drawBorder: false 
+                        drawBorder: false
                     },
-                    ticks: { 
-                        color: '#94a3b8',
-                        callback: function(value) { return value + '%'; }
+                    ticks: {
+                        color: "#94a3b8",
+                        callback: function(value) { return value + "%"; }
                     }
                 }
             },
-            interaction: { mode: 'nearest', axis: 'x', intersect: false }
+            interaction: { mode: "nearest", axis: "x", intersect: false }
         }
     });
 }

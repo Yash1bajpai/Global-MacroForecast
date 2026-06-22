@@ -13,15 +13,18 @@ python-dotenv==1.1.0
 requests==2.32.3
 
 # ── Multi-country Data APIs ─────────────────────────────────
-wbdata           # World Bank API (no key required)
+wbdata==1.1.0
+
+# ── Resilience ───────────────────────────────────────────────
+tenacity==9.1.2
 
 # ── Backend API ─────────────────────────────────────────────
 fastapi==0.115.12
 uvicorn==0.34.3
 pydantic==2.11.5
 
-# ── Database ────────────────────────────────────────────────
-sqlalchemy==2.0.41
+# ── Database (reserved for future Phase 2 DB integration) ───
+# sqlalchemy==2.0.41
 
 # ── Notebooks & EDA ─────────────────────────────────────────
 matplotlib==3.10.3

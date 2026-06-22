@@ -1,4 +1,4 @@
-# 📈 National Economic Intelligence | GDP Nowcasting Engine
+# 📈 Global MacroForecast | GDP Nowcasting Engine
 
 An end-to-end, full-stack macroeconomic forecasting system designed to predict Quarter-on-Quarter (QoQ) GDP growth for four major global economies: **United States, Germany, Japan, and India**. 
 

@@ -14,6 +14,8 @@ import logging
 import datetime
 import pandas as pd
 
+from tenacity import retry, stop_after_attempt, wait_exponential
+
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, PROJECT_ROOT)
 
@@ -33,6 +35,17 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+@retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
+def _fetch_wb_dataframe(ind_code, ind_name, iso2_list, date_range):
+    import wbdata
+    return wbdata.get_dataframe(
+        {ind_code: ind_name},
+        country=iso2_list,
+        date=date_range,
+        parse_dates=True,
+    )
+
+
 def fetch_worldbank() -> None:
     try:
         import wbdata
@@ -49,12 +62,7 @@ def fetch_worldbank() -> None:
     for ind_name, ind_code in WB_INDICATORS.items():
         logger.info("Fetching WB: %s (%s) ...", ind_name, ind_code)
         try:
-            df = wbdata.get_dataframe(
-                {ind_code: ind_name},
-                country=iso2_list,
-                date=date_range,
-                parse_dates=True,
-            )
+            df = _fetch_wb_dataframe(ind_code, ind_name, iso2_list, date_range)
             df = df.reset_index()
 
             # Normalise column names to lowercase

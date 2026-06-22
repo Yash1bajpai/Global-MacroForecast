@@ -15,6 +15,8 @@ import datetime
 import requests
 import pandas as pd
 
+from tenacity import retry, stop_after_attempt, wait_exponential
+
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, PROJECT_ROOT)
 
@@ -96,6 +98,11 @@ def parse_oecd_json(resp_json: dict, freq: str = "Q") -> pd.DataFrame:
         raise RuntimeError(f"Failed to parse OECD JSON: {exc}") from exc
 
 
+@retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
+def _get_oecd(url: str) -> requests.Response:
+    resp = requests.get(url, timeout=30)
+    resp.raise_for_status()
+    return resp
 
 
 def fetch_oecd() -> None:
@@ -113,8 +120,7 @@ def fetch_oecd() -> None:
                 logger.info("Fetching OECD %s / %s ...", country_key, ds_name)
                 logger.info("  URL: %s", url)
 
-                resp = requests.get(url, timeout=30)
-                resp.raise_for_status()
+                resp = _get_oecd(url)
 
                 df = parse_oecd_json(resp.json(), freq=ds_cfg["frequency"])
                 if df.empty:

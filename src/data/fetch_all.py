@@ -50,11 +50,9 @@ if __name__ == "__main__":
     logger.info("GDP Nowcast -- Full Data Fetch  |  %s",
                 datetime.datetime.now().strftime("%Y-%m-%d %H:%M"))
 
-    from src.data.fetch_fred       import fetch_country as _   # noqa: just import check
     from src.data.fetch_worldbank  import fetch_worldbank
     from src.data.fetch_oecd       import fetch_oecd
 
-    # Re-import the fred runner as a callable
     from fredapi import Fred
     from config.settings import (
         FRED_API_KEY,

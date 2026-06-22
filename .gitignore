@@ -16,6 +16,10 @@ __pycache__/
 logs/
 *.log
 
+# Data & Models (generated artifacts — do not version control)
+data/
+models_saved/
+
 # Jupyter Notebooks
 .ipynb_checkpoints/
 
@@ -32,3 +36,4 @@ Thumbs.db
 
 # AI Context Files
 project_context_prompt.txt
+PROJECT_SCAN_REPORT.md
