@@ -5,6 +5,33 @@ Format: **What changed → Why it was changed → Issue it solved.**
 
 ---
 
+## [1.3.0] — 2026-06-22 (Final Tuned Production Models)
+
+### Changed — Model Retraining (Optuna Parameters Applied)
+- Germany, Japan, India LightGBM models retrained with Optuna-tuned hyperparameters.
+- US kept at baseline (4.8% gain was within noise margin; SARIMA already balances ensemble).
+- India: `max_depth` manually overridden from Optuna's 6 → 3 to prevent overfitting on annual WB data forward-filled to quarterly.
+
+### 📊 Model Performance: Before vs After Optuna
+
+| Country | Model | Baseline RMSE | Tuned RMSE | Improvement | MAE (Tuned) | Directional Acc |
+|---------|-------|:---:|:---:|:---:|:---:|:---:|
+| 🇺🇸 US | SARIMA + LightGBM Ensemble | 2.3009 | 2.3009 | — (kept defaults) | 1.1249 | 87.5% |
+| 🇯🇵 Japan | SARIMA + LightGBM Ensemble | 1.6300 | **1.6153** | ↓ 0.9% | 0.9673 | 75.0% |
+| 🇩🇪 Germany | SARIMA + LightGBM Ensemble | 2.5100 | **2.4179** | ↓ 3.7% | 1.1262 | 70.8% |
+| 🇮🇳 India | LightGBM only (no SARIMA) | 4.6015 | **4.2507** | ↓ 7.6% | 2.4191 | 84.2% |
+
+### 🔧 Final Hyperparameters (Deployed)
+
+| Country | `learning_rate` | `max_depth` | `num_leaves` | `n_estimators` | `subsample` | `colsample_bytree` |
+|---------|:---:|:---:|:---:|:---:|:---:|:---:|
+| 🇺🇸 US | 0.03 | 3 | 8 | 100 | 0.70 | 0.70 |
+| 🇯🇵 Japan | 0.09088 | 3 | 12 | 150 | 0.723 | 0.921 |
+| 🇩🇪 Germany | 0.05445 | 4 | 17 | 200 | 0.716 | 0.729 |
+| 🇮🇳 India | 0.034 | 3 *(fixed)* | 8 *(fixed)* | 200 | 0.57 | 0.78 |
+
+---
+
 ## [1.2.0] — 2026-06-22
 
 ### Added
@@ -77,6 +104,15 @@ Format: **What changed → Why it was changed → Issue it solved.**
   - *Why:* Tree-based models cannot extrapolate beyond training data. A COVID dummy signals to the model that 2020 Q1-Q2 was structurally different, preventing those outliers from distorting normal period predictions.
 - **23 unit tests** in `tests/test_pipeline.py` — all passing
   - Coverage: file existence, data integrity, zero data leakage validation, train/test non-overlap, model RMSE bounds, ensemble weight sum
+
+### 📊 Initial Baseline Model Accuracy (v1.0.0 — Default Params, Test: 2020 Q1 onward)
+
+| Country | Algorithm | RMSE | MSE | MAE | Directional Acc | Ensemble Weights |
+|---------|-----------|:---:|:---:|:---:|:---:|:---:|
+| 🇺🇸 US | LGBM (51%) + SARIMA (49%) | 2.3009 | 5.2940 | 1.1249 | 87.5% | LGBM=0.511, SARIMA=0.489 |
+| 🇯🇵 Japan | LGBM (53%) + SARIMA (47%) | 1.6300 | 2.6569 | ~0.97 | 75.0% | LGBM=0.530, SARIMA=0.470 |
+| 🇩🇪 Germany | LGBM (51%) + SARIMA (49%) | 2.5100 | 6.3001 | ~1.10 | 70.8% | LGBM=0.510, SARIMA=0.490 |
+| 🇮🇳 India | LGBM only (100%) | 4.6015 | 21.174 | 2.7392 | 84.2% | LGBM=1.000, SARIMA=N/A |
 
 ### Added — Frontend
 - **Premium "Data Journalism" Landing Page** replacing a basic admin dashboard
