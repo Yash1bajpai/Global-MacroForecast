@@ -424,9 +424,10 @@ function clearElement(el) {
     }
 }
 
-function setTrend(el, annRate, nextQtr) {
+function setTrend(el, annRate, nextQtr, isAnnual = false) {
     clearElement(el);
-    const baseText = document.createTextNode("Annualized ~" + annRate.toFixed(1) + "% ");
+    const prefix = isAnnual ? "Annual ~" : "Annualized ~";
+    const baseText = document.createTextNode(prefix + annRate.toFixed(1) + "% ");
     el.appendChild(baseText);
 
     const span = document.createElement("span");
@@ -513,10 +514,11 @@ async function initializeCards() {
             const trendEl = document.getElementById("trend-" + c);
             const rmseEl = document.getElementById("rmse-" + c);
 
-            valEl.textContent = (nextQtr > 0 ? "+" : "") + nextQtr.toFixed(2) + "%";
+            const isIndia = (c === "india");
+            valEl.textContent = (nextQtr > 0 ? "+" : "") + nextQtr.toFixed(2) + "%" + (isIndia ? " (Annual)" : "");
 
-            const annRate = nextQtr * 4;
-            setTrend(trendEl, annRate, nextQtr);
+            const annRate = isIndia ? nextQtr : (nextQtr * 4);
+            setTrend(trendEl, annRate, nextQtr, isIndia);
 
             rmseEl.textContent = data.metrics.ensemble_rmse.toFixed(2) + "%";
         } catch (err) {
