@@ -1,8 +1,7 @@
 const USE_MOCK = false; // Set to true for offline UI development only
 
-// API configuration: auto-detect local vs production. 
-// Uses relative path '/api' when served via unified FastAPI backend.
-const API_BASE = window.API_BASE || "/api";
+// Static Data URL for Vercel Deployment
+const STATIC_DATA_URL = "data/forecasts.json";
 
 // Standardized country names for UI
 const COUNTRY_TITLES = {
@@ -475,6 +474,8 @@ function collapseAll() {
 }
 
 // --- FETCH DATA ---
+let cachedStaticData = null;
+
 async function fetchData(country) {
     const isMock = mockToggle.checked;
     if (isMock) {
@@ -482,22 +483,19 @@ async function fetchData(country) {
     }
 
     try {
-        const [histRes, fcRes, metRes] = await Promise.all([
-            fetch(API_BASE + "/history/" + country),
-            fetch(API_BASE + "/forecast/" + country),
-            fetch(API_BASE + "/metrics/" + country)
-        ]);
-
-        if (!histRes.ok || !fcRes.ok || !metRes.ok) {
-            throw new Error("API returned non-OK status");
+        if (!cachedStaticData) {
+            const res = await fetch(STATIC_DATA_URL);
+            if (!res.ok) throw new Error("Failed to load static forecasts.json");
+            cachedStaticData = await res.json();
         }
 
-        const history = await histRes.json();
-        const forecast = await fcRes.json();
-        const metrics = await metRes.json();
-        return { history, forecast, metrics };
+        if (!cachedStaticData[country]) {
+            throw new Error(`No data found for country: ${country}`);
+        }
+
+        return cachedStaticData[country];
     } catch (error) {
-        console.error("API fetch failed:", error);
+        console.error("Fetch failed (falling back to Mock):", error);
         mockToggle.checked = true;
         return MOCK_DATA[country];
     }
