@@ -1,5 +1,7 @@
 # 📈 Global MacroForecast | GDP Nowcasting Engine
 
+**🌍 Live Dashboard:** [https://global-macro-forecast.vercel.app/](https://global-macro-forecast.vercel.app/)
+
 An end-to-end, full-stack macroeconomic forecasting system designed to predict Quarter-on-Quarter (QoQ) GDP growth for four major global economies: **United States, Germany, Japan, and India**. 
 
 Built with an ultra-premium "Data Journalism" aesthetic, this system utilizes a dynamically weighted **Machine Learning Ensemble** to forecast up to 8 quarters into the future.
@@ -101,13 +103,7 @@ Run the export script to load your local Machine Learning models, compute the la
 ```bash
 python src/scripts/export_forecasts.py
 ```
-
-### 4. View the Dashboard
-Since the frontend is entirely static, simply open `frontend/index.html` in your web browser. Or use a simple HTTP server:
-```bash
-python -m http.server 8080 --directory frontend
-```
-*Navigate to `http://127.0.0.1:8080/` to view the application.*
+*Note: Pushing the updated JSON to GitHub will automatically trigger a Vercel deployment to update the live site.*
 
 ---
 
