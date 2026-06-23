@@ -7,6 +7,8 @@ from typing import Dict, List, Optional
 from enum import Enum
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -120,7 +122,7 @@ app.add_middleware(
 )
 
 
-@app.get("/", response_model=HealthResponse)
+@app.get("/api/health", response_model=HealthResponse)
 def health_check() -> Dict[str, str]:
     return {"status": "online", "message": "GDP Nowcasting API is running."}
 
@@ -186,6 +188,18 @@ def get_forecast(country: CountryCode) -> List[Dict[str, Optional[float]]]:
         response.append(point)
 
     return response
+
+
+# --- Serve Static Frontend ---
+app.mount("/css", StaticFiles(directory=os.path.join(PROJECT_ROOT, "frontend", "css")), name="css")
+app.mount("/js", StaticFiles(directory=os.path.join(PROJECT_ROOT, "frontend", "js")), name="js")
+
+@app.get("/")
+def serve_index():
+    index_path = os.path.join(PROJECT_ROOT, "frontend", "index.html")
+    if not os.path.exists(index_path):
+        raise HTTPException(status_code=404, detail="Frontend index.html not found.")
+    return FileResponse(index_path)
 
 
 if __name__ == "__main__":

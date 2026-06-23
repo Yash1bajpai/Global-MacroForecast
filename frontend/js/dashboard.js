@@ -1,7 +1,8 @@
 const USE_MOCK = false; // Set to true for offline UI development only
 
-// API configuration: override via env at build time, or fallback to localhost
-const API_BASE = window.API_BASE || "http://127.0.0.1:8000/api";
+// API configuration: auto-detect local vs production. 
+// Uses relative path '/api' when served via unified FastAPI backend.
+const API_BASE = window.API_BASE || "/api";
 
 // Standardized country names for UI
 const COUNTRY_TITLES = {
