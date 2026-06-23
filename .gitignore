@@ -39,3 +39,13 @@ Thumbs.db
 # AI Context Files
 project_context_prompt.txt
 PROJECT_SCAN_REPORT.md
+FULL_SCAN_REPORT_*.md
+check_report.py
+
+# Deployment
+.dockerignore
+deploy.sh
+nginx/nginx.conf
+docker-compose.yml
+Dockerfile
+

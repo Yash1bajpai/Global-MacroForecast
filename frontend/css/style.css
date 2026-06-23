@@ -243,6 +243,7 @@ input:checked + .slider:before { transform: translateX(18px); }
 }
 .high-conf { background: #D1FAE5; color: var(--success); }
 .med-conf { background: #FEF3C7; color: var(--warning); }
+.annual-badge { background: #DBEAFE; color: #1E40AF; border: 1px solid #1E40AF; }
 
 .card-kpis {
     display: flex;
