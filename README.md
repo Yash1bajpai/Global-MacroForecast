@@ -1,6 +1,11 @@
+> ⚠️ **PROPRIETARY & CONFIDENTIAL**  
+> This repository contains the architectural implementation of the Global MacroForecast pipeline. While the core algorithmic architecture and ensemble weights (`.pkl`) are provided for **strict portfolio evaluation purposes only**, access to live proprietary data streams and automated re-training triggers have been restricted to protect intellectual property.
+
 # 📈 Global MacroForecast | GDP Nowcasting Engine
 
 **🌍 Live Dashboard:** [https://global-macro-forecast.vercel.app/](https://global-macro-forecast.vercel.app/)
+
+![Dashboard Preview](screenshots/dashboard_preview.jpg)
 
 An end-to-end, full-stack macroeconomic forecasting system designed to predict Quarter-on-Quarter (QoQ) GDP growth for four major global economies: **United States, Germany, Japan, and India**. 
 
@@ -11,6 +16,8 @@ Built with an ultra-premium "Data Journalism" aesthetic, this system utilizes a 
 ## 🎯 Model Performance & Optimization
 
 Our rigorous chronological hold-out validation ensures zero future-data leakage. The ensemble model (combining LightGBM and SARIMA) achieves the following metrics on unseen test data (**Test period: 2020 Q1 → Present**). Hyperparameters were tuned using **Optuna v4.2** on Kaggle.
+
+![Actual vs Predicted Forecast](screenshots/master_ensemble_forecast.png)
 
 | Economy | Acc | RMSE | MAE | Ensemble Weighting | Key Optuna Params |
 | :--- | :---: | :---: | :---: | :--- | :--- |
@@ -115,3 +122,4 @@ python src/scripts/export_forecasts.py
 
 ---
 *© 2026 Yash Bajpai. All rights reserved.*
+licence adb
