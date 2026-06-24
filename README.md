@@ -5,7 +5,7 @@
 
 **🌍 Live Dashboard:** [https://global-macro-forecast.vercel.app/](https://global-macro-forecast.vercel.app/)
 
-![Dashboard Preview](screenshots/dashboard_preview.jpg)
+![Dashboard Preview](screenshots/dashboard_preview.png)
 
 An end-to-end, full-stack macroeconomic forecasting system designed to predict Quarter-on-Quarter (QoQ) GDP growth for four major global economies: **United States, Germany, Japan, and India**. 
 
