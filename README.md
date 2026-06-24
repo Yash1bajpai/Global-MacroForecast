@@ -28,21 +28,6 @@ Our rigorous chronological hold-out validation ensures zero future-data leakage.
 
 > *Directional Accuracy = model's ability to correctly predict GDP expansion vs contraction relative to the prior quarter. Deep trees were manually restricted for India due to low variance in annual-to-quarterly forward-filled data.*
 
-### Individual Economy Forecasts (Actual vs Predicted)
-Below are the True vs Predicted trajectories on the unseen test set for the core predictive models.
-
-**United States (US)**
-![US Forecast](screenshots/us_lgbm_forecast.png)
-
-**Germany**
-![Germany Forecast](screenshots/germany_lgbm_forecast.png)
-
-**Japan**
-![Japan Forecast](screenshots/japan_lgbm_forecast.png)
-
-**India**
-![India Forecast](screenshots/india_lgbm_forecast.png)
-
 ---
 
 ## ✨ Key Features
