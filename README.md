@@ -5,7 +5,7 @@
 
 **🌍 Live Dashboard:** [https://global-macro-forecast.vercel.app/](https://global-macro-forecast.vercel.app/)
 
-![Dashboard Preview](screenshots/dashboard_preview.png)
+![Dashboard Preview](screenshots/dashboard_preview_2026.png)
 
 ![Actual vs Predicted Accuracy](screenshots/dashboard_accuracy_chart.png)
 
