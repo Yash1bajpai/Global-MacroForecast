@@ -354,7 +354,7 @@ input:checked + .slider:before { transform: translateX(18px); }
 
 /* Sources Section */
 .sources-section { margin-bottom: 80px; }
-.sources-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+.sources-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 20px; }
 .source-card {
     background: var(--bg-panel);
     border: 1px solid var(--border-color);
