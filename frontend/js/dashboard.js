@@ -514,11 +514,10 @@ async function initializeCards() {
             const trendEl = document.getElementById("trend-" + c);
             const rmseEl = document.getElementById("rmse-" + c);
 
-            const isIndia = (c === "india");
-            valEl.textContent = (nextQtr > 0 ? "+" : "") + nextQtr.toFixed(2) + "%" + (isIndia ? " (Annual)" : "");
+            valEl.textContent = (nextQtr > 0 ? "+" : "") + nextQtr.toFixed(2) + "%";
 
-            const annRate = isIndia ? nextQtr : (nextQtr * 4);
-            setTrend(trendEl, annRate, nextQtr, isIndia);
+            const annRate = nextQtr * 4;
+            setTrend(trendEl, annRate, nextQtr, false);
 
             rmseEl.textContent = data.metrics.ensemble_rmse.toFixed(2) + "%";
         } catch (err) {
