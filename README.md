@@ -7,6 +7,8 @@
 
 ![Dashboard Preview](screenshots/dashboard_preview.png)
 
+![Actual vs Predicted Accuracy](screenshots/dashboard_accuracy_chart.png)
+
 An end-to-end, full-stack macroeconomic forecasting system designed to predict Quarter-on-Quarter (QoQ) GDP growth for four major global economies: **United States, Germany, Japan, and India**. 
 
 Built with an ultra-premium "Data Journalism" aesthetic, this system utilizes a dynamically weighted **Machine Learning Ensemble** to forecast up to 8 quarters into the future.
