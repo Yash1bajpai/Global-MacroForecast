@@ -40,9 +40,8 @@ print("=" * 55)
 print(f"Total rows    : {len(df)}")
 print(f"Features      : {X.shape[1]}")
 print(f"Date range    : {df.index[0].date()} to {df.index[-1].date()}")
-print(f"\nNOTE: India GDP is annual WB data forward-filled to quarterly.")
-print(f"Only 25 unique GDP values across {len(df)} rows.")
-print(f"LightGBM will learn from CPI, savings rate, trade balance as predictors.")
+print(f"\nNOTE: India GDP is now based on true quarterly MOSPI data (base 2011-12).")
+print(f"LightGBM will learn from true quarterly variance, CPI, savings rate, etc.")
 
 TRAIN_END  = "2019-10-01"
 TEST_START = "2020-01-01"
@@ -55,22 +54,20 @@ y_test  = y[TEST_START:]
 print(f"\nTrain : {X_train.index[0].date()} to {X_train.index[-1].date()} | {len(X_train)} rows")
 print(f"Test  : {X_test.index[0].date()}  to {X_test.index[-1].date()}  | {len(X_test)} rows")
 
-# OPTUNA-INFORMED PARAMS — India (manually reviewed, ~6.8% RMSE improvement)
-# max_depth & num_leaves FIXED at 3/8 — Optuna picked depth=6 but India data is
-# annual WB data forward-filled to quarterly (~25 unique GDP values). Deep trees
-# would just memorize quarterly noise. Regularization partially restored.
+# PARAMS — India (Relaxed now that we have true quarterly data)
+# We allow deeper trees to learn from quarterly variance.
 params = {
     "objective":         "regression",
     "metric":            "rmse",
-    "learning_rate":     0.034,     # Optuna: slightly higher than baseline 0.03
-    "num_leaves":        8,         # FIXED: depth=3 can have max 2^3=8 leaves
-    "max_depth":         3,         # FIXED: don't let it overfit annual data
-    "min_child_samples": 8,         # Optuna
-    "min_child_weight":  0.01553,   # Optuna
-    "subsample":         0.57,      # Optuna
-    "colsample_bytree":  0.78,      # Optuna
-    "reg_alpha":         0.1,       # RESTORED: Optuna set near-zero, too risky
-    "reg_lambda":        0.1,       # RESTORED: Optuna set 0.096, kept similar
+    "learning_rate":     0.034,
+    "num_leaves":        31,        # Relaxed
+    "max_depth":         6,         # Relaxed
+    "min_child_samples": 8,
+    "min_child_weight":  0.01553,
+    "subsample":         0.57,
+    "colsample_bytree":  0.78,
+    "reg_alpha":         0.1,
+    "reg_lambda":        0.1,
     "verbose":          -1,
     "random_state":      42,
 }

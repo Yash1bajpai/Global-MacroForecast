@@ -95,10 +95,34 @@ def build_country_master(country):
             frames["gdp_level"]  = gdp_q
             frames["gdp_growth"] = log_diff_pct(gdp_q)
     else:
-        # India: no quarterly GDP on FRED, use WB annual growth rate
-        wb_gdp = load_csv(os.path.join(raw_dir, "wb_gdp_growth_pct.csv"))
-        if wb_gdp is not None:
-            frames["gdp_growth"] = annual_to_quarterly(wb_gdp)
+        # Custom quarterly GDP for India
+        india_hist_path = os.path.join(raw_dir, "india_gdp_historical.csv")
+        if country == "india" and os.path.exists(india_hist_path):
+            df_in = pd.read_csv(india_hist_path)
+            def parse_q(row):
+                y_str = str(row['Year'])
+                if '-' in y_str:
+                    year = int(y_str.split('-')[0])
+                else:
+                    year = int(y_str)
+                q = str(row['Quarter']).strip().upper()
+                if q == 'Q1': return pd.Timestamp(f"{year}-04-01")
+                if q == 'Q2': return pd.Timestamp(f"{year}-07-01")
+                if q == 'Q3': return pd.Timestamp(f"{year}-10-01")
+                if q == 'Q4': return pd.Timestamp(f"{year+1}-01-01")
+                return pd.NaT
+            
+            df_in['date'] = df_in.apply(parse_q, axis=1)
+            s = df_in.dropna(subset=['date', 'GDP']).set_index('date')['GDP'].sort_index()
+            s = pd.to_numeric(s, errors='coerce')
+            gdp_q = s.resample("QS").last()
+            frames["gdp_level"] = gdp_q
+            frames["gdp_growth"] = log_diff_pct(gdp_q)
+        else:
+            # Fallback to annual World Bank growth
+            wb_gdp = load_csv(os.path.join(raw_dir, "wb_gdp_growth_pct.csv"))
+            if wb_gdp is not None:
+                frames["gdp_growth"] = annual_to_quarterly(wb_gdp)
 
     # Monthly FRED series -> quarterly mean
     monthly_cols = {
