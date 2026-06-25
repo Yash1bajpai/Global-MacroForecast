@@ -48,4 +48,5 @@ deploy.sh
 nginx/nginx.conf
 docker-compose.yml
 Dockerfile
+scratch_*
 
