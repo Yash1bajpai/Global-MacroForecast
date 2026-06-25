@@ -21,9 +21,9 @@ Our rigorous chronological hold-out validation ensures zero future-data leakage.
 
 | Economy | Acc | RMSE | MAE | Ensemble Weighting | Key Optuna Params |
 | :--- | :---: | :---: | :---: | :--- | :--- |
-| 🇺🇸 **US** | **87.5%** | 2.30 | 1.12 | LGBM 51% + SARIMA 49% | `lr: 0.03`, `depth: 3`, `leaves: 8` |
-| 🇯🇵 **Japan** | 75.0% | 1.61 | 0.96 | LGBM 56% + SARIMA 44% | `lr: 0.09`, `depth: 3`, `leaves: 12` |
-| 🇩🇪 **Germany** | 70.8% | 2.41 | 1.12 | LGBM 53% + SARIMA 47% | `lr: 0.05`, `depth: 4`, `leaves: 17` |
+| 🇺🇸 **US** | **87.5%** | 2.29 | 1.11 | LGBM 51% + SARIMA 49% | `lr: 0.03`, `depth: 3`, `leaves: 8` |
+| 🇯🇵 **Japan** | 75.0% | 1.63 | 0.95 | LGBM 56% + SARIMA 44% | `lr: 0.09`, `depth: 3`, `leaves: 12` |
+| 🇩🇪 **Germany** | 70.8% | 2.36 | 1.10 | LGBM 54% + SARIMA 46% | `lr: 0.05`, `depth: 4`, `leaves: 17` |
 | 🇮🇳 **India** | **84.2%** | 4.25 | 2.41 | LGBM 100% (no SARIMA) | `lr: 0.03`, `depth: 3` (Manual), `leaves: 8` |
 
 > *Directional Accuracy = model's ability to correctly predict GDP expansion vs contraction relative to the prior quarter. Deep trees were manually restricted for India due to low variance in annual-to-quarterly forward-filled data.*
