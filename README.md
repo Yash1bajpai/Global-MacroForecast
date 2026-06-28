@@ -123,5 +123,9 @@ python src/scripts/export_forecasts.py
 * 💼 **LinkedIn:** [Yash Bajpai](https://linkedin.com/in/yash-bajpai-b5a86332a)
 * 📧 **Email:** bajpaiyash2707@gmail.com
 
+## 📜 License
+
+Distributed under the MIT License. See [`LICENSE`](LICENSE) for more information.
+
 ---
-*© 2026 Yash Bajpai. All rights reserved.*
+*© 2026 Yash Bajpai. Licensed under the MIT License.*

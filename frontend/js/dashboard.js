@@ -533,7 +533,8 @@ async function initializeCards() {
 
             valEl.textContent = (nextQtr > 0 ? "+" : "") + nextQtr.toFixed(2) + "%";
 
-            const annRate = nextQtr * 4;
+            const r = nextQtr / 100.0;
+            const annRate = (Math.pow(1 + r, 4) - 1) * 100.0;
             setTrend(trendEl, annRate, nextQtr, false);
 
             rmseEl.textContent = data.metrics.ensemble_rmse.toFixed(2) + "%";
@@ -577,8 +578,8 @@ function drawChart(data) {
     }
 
     const gradientBlue = ctx.createLinearGradient(0, 0, 0, 400);
-    gradientBlue.addColorStop(0, "rgba(27, 54, 93, 0.18)"); // Royal Oxford Navy accent
-    gradientBlue.addColorStop(1, "rgba(27, 54, 93, 0.0)");
+    gradientBlue.addColorStop(0, "rgba(74, 142, 122, 0.25)"); // Patina Green accent
+    gradientBlue.addColorStop(1, "rgba(74, 142, 122, 0.0)");
 
     chartInstance = new Chart(ctx, {
         type: "line",
@@ -588,11 +589,11 @@ function drawChart(data) {
                 {
                     label: "Historical GDP",
                     data: historyData,
-                    borderColor: "#1B365D",
+                    borderColor: "#4A8E7A",
                     backgroundColor: gradientBlue,
                     borderWidth: 2.5,
-                    pointBackgroundColor: "#FFFFFF",
-                    pointBorderColor: "#1B365D",
+                    pointBackgroundColor: "#1E232A",
+                    pointBorderColor: "#4A8E7A",
                     pointRadius: 4,
                     fill: true,
                     tension: 0.4
@@ -600,10 +601,10 @@ function drawChart(data) {
                 {
                     label: "Forecast",
                     data: forecastData,
-                    borderColor: "#C5A059",
+                    borderColor: "#B87333",
                     borderWidth: 2.5,
                     borderDash: [5, 5],
-                    pointBackgroundColor: "#C5A059",
+                    pointBackgroundColor: "#B87333",
                     pointRadius: 5,
                     fill: false,
                     tension: 0.4
@@ -618,27 +619,27 @@ function drawChart(data) {
                 tooltip: {
                     mode: "index",
                     intersect: false,
-                    backgroundColor: "rgba(15, 23, 42, 0.95)", // Oxford Slate
-                    titleColor: "#FFFFFF",
-                    bodyColor: "#C5A059",
-                    borderColor: "rgba(197, 160, 89, 0.4)",
+                    backgroundColor: "rgba(39, 45, 55, 0.95)", // Rich Slate
+                    titleColor: "#F1F3F5",
+                    bodyColor: "#B87333",
+                    borderColor: "rgba(184, 115, 51, 0.4)",
                     borderWidth: 1,
                     padding: 12
                 }
             },
             scales: {
                 x: {
-                    grid: { color: "rgba(0, 0, 0, 0.05)", drawBorder: false },
-                    ticks: { color: "#475569", maxTicksLimit: 12 }
+                    grid: { color: "rgba(255, 255, 255, 0.06)", drawBorder: false },
+                    ticks: { color: "#9BA4B0", maxTicksLimit: 12 }
                 },
                 y: {
                     grid: {
-                        color: (context) => context.tick.value === 0 ? "rgba(197, 160, 89, 0.4)" : "rgba(0, 0, 0, 0.05)",
+                        color: (context) => context.tick.value === 0 ? "rgba(184, 115, 51, 0.4)" : "rgba(255, 255, 255, 0.06)",
                         lineWidth: (context) => context.tick.value === 0 ? 2 : 1,
                         drawBorder: false
                     },
                     ticks: {
-                        color: "#475569",
+                        color: "#9BA4B0",
                         callback: function(value) { return value + "%"; }
                     }
                 }
