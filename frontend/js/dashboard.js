@@ -1,6 +1,9 @@
-const USE_MOCK = true; // Hardcoded to true for Vercel deployment to guarantee UI rendering
+// Configurable Backend API URL (Option 1 Deployment)
+const API_BASE_URL = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" 
+    ? "http://127.0.0.1:8000" 
+    : "https://global-macroforecast-api.onrender.com";
 
-// Static Data URL for Vercel Deployment
+// Static Data URL for Vercel Deployment Fallback
 const STATIC_DATA_URL = "data/forecasts.json";
 
 // Standardized country names for UI
@@ -474,31 +477,45 @@ function collapseAll() {
     chartWrapper.classList.add("hidden");
 }
 
-// --- FETCH DATA ---
+// --- FETCH DATA (Option 1 Hybrid Caching & Graceful Degradation) ---
 let cachedStaticData = null;
+let cachedApiData = {};
 
 async function fetchData(country) {
-    // Force mock data on Vercel to ensure recruiter sees the UI perfectly
-    const isMock = true; 
-    if (isMock) {
+    if (mockToggle && mockToggle.checked) {
         return MOCK_DATA[country];
     }
 
+    if (cachedApiData[country]) {
+        return cachedApiData[country];
+    }
+
     try {
-        if (!cachedStaticData) {
-            const res = await fetch(STATIC_DATA_URL);
-            if (!res.ok) throw new Error("Failed to load static forecasts.json");
-            cachedStaticData = await res.json();
-        }
+        // Attempt to fetch from live FastAPI endpoint (cached for 24h by backend Cache-Control header)
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 4000); // 4s timeout for cloud cold-starts
 
-        if (!cachedStaticData[country]) {
-            throw new Error(`No data found for country: ${country}`);
-        }
+        const res = await fetch(`${API_BASE_URL}/api/dashboard/${country}`, { signal: controller.signal });
+        clearTimeout(timeoutId);
 
-        return cachedStaticData[country];
+        if (!res.ok) throw new Error(`API status ${res.status}`);
+        const apiData = await res.json();
+        cachedApiData[country] = apiData;
+        return apiData;
     } catch (error) {
-        console.error("Fetch failed (falling back to Mock):", error);
-        mockToggle.checked = true;
+        console.warn(`Live API unreachable or cold-starting (${error.message}). Gracefully falling back to static forecasts.json...`);
+        try {
+            if (!cachedStaticData) {
+                const res = await fetch(STATIC_DATA_URL);
+                if (!res.ok) throw new Error("Failed to load static forecasts.json");
+                cachedStaticData = await res.json();
+            }
+            if (cachedStaticData[country]) {
+                return cachedStaticData[country];
+            }
+        } catch (staticErr) {
+            console.warn("Static JSON fallback failed, using MOCK_DATA.", staticErr);
+        }
         return MOCK_DATA[country];
     }
 }

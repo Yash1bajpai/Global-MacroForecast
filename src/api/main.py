@@ -5,7 +5,7 @@ import pandas as pd
 from contextlib import asynccontextmanager
 from typing import Dict, List, Optional
 from enum import Enum
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -54,6 +54,12 @@ class MetricsResponse(BaseModel):
 class HealthResponse(BaseModel):
     status: str
     message: str
+
+
+class DashboardResponse(BaseModel):
+    history: Dict[str, float]
+    metrics: MetricsResponse
+    forecast: List[ForecastPoint]
 
 
 @asynccontextmanager
@@ -111,7 +117,7 @@ origins_env = os.getenv("ALLOWED_ORIGINS", "")
 if origins_env:
     allowed_origins = [o.strip() for o in origins_env.split(",") if o.strip()]
 else:
-    allowed_origins = ["http://localhost:8080", "http://127.0.0.1:8080"]
+    allowed_origins = ["*"]
 
 app.add_middleware(
     CORSMiddleware,
@@ -120,6 +126,14 @@ app.add_middleware(
     allow_methods=["GET"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def add_cache_control_header(request: Request, call_next):
+    response = await call_next(request)
+    if request.method == "GET" and request.url.path.startswith("/api/"):
+        response.headers["Cache-Control"] = "max-age=86400"
+    return response
 
 
 @app.get("/api/health", response_model=HealthResponse)
@@ -188,6 +202,18 @@ def get_forecast(country: CountryCode) -> List[Dict[str, Optional[float]]]:
         response.append(point)
 
     return response
+
+
+@app.get("/api/dashboard/{country}", response_model=DashboardResponse)
+def get_dashboard_data(country: CountryCode) -> Dict[str, object]:
+    hist = get_history(country)
+    met = get_metrics(country)
+    fc = get_forecast(country)
+    return {
+        "history": hist,
+        "metrics": met,
+        "forecast": fc
+    }
 
 
 # --- Serve Static Frontend ---
