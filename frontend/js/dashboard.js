@@ -577,8 +577,8 @@ function drawChart(data) {
     }
 
     const gradientBlue = ctx.createLinearGradient(0, 0, 0, 400);
-    gradientBlue.addColorStop(0, "rgba(6, 182, 212, 0.25)"); // Cyber Teal accent
-    gradientBlue.addColorStop(1, "rgba(6, 182, 212, 0.0)");
+    gradientBlue.addColorStop(0, "rgba(27, 54, 93, 0.18)"); // Royal Oxford Navy accent
+    gradientBlue.addColorStop(1, "rgba(27, 54, 93, 0.0)");
 
     chartInstance = new Chart(ctx, {
         type: "line",
@@ -588,11 +588,11 @@ function drawChart(data) {
                 {
                     label: "Historical GDP",
                     data: historyData,
-                    borderColor: "#06B6D4",
+                    borderColor: "#1B365D",
                     backgroundColor: gradientBlue,
-                    borderWidth: 2,
-                    pointBackgroundColor: "#090D16",
-                    pointBorderColor: "#06B6D4",
+                    borderWidth: 2.5,
+                    pointBackgroundColor: "#FFFFFF",
+                    pointBorderColor: "#1B365D",
                     pointRadius: 4,
                     fill: true,
                     tension: 0.4
@@ -600,11 +600,11 @@ function drawChart(data) {
                 {
                     label: "Forecast",
                     data: forecastData,
-                    borderColor: "#10B981",
+                    borderColor: "#C5A059",
                     borderWidth: 2.5,
                     borderDash: [5, 5],
-                    pointBackgroundColor: "#10B981",
-                    pointRadius: 4,
+                    pointBackgroundColor: "#C5A059",
+                    pointRadius: 5,
                     fill: false,
                     tension: 0.4
                 }
@@ -618,27 +618,27 @@ function drawChart(data) {
                 tooltip: {
                     mode: "index",
                     intersect: false,
-                    backgroundColor: "rgba(9, 13, 22, 0.95)", // Obsidian
-                    titleColor: "#F8FAFC",
-                    bodyColor: "#10B981",
-                    borderColor: "rgba(6, 182, 212, 0.4)",
+                    backgroundColor: "rgba(15, 23, 42, 0.95)", // Oxford Slate
+                    titleColor: "#FFFFFF",
+                    bodyColor: "#C5A059",
+                    borderColor: "rgba(197, 160, 89, 0.4)",
                     borderWidth: 1,
                     padding: 12
                 }
             },
             scales: {
                 x: {
-                    grid: { color: "rgba(255, 255, 255, 0.06)", drawBorder: false },
-                    ticks: { color: "#94A3B8", maxTicksLimit: 12 } // Slate Silver
+                    grid: { color: "rgba(0, 0, 0, 0.05)", drawBorder: false },
+                    ticks: { color: "#475569", maxTicksLimit: 12 }
                 },
                 y: {
                     grid: {
-                        color: (context) => context.tick.value === 0 ? "rgba(6, 182, 212, 0.4)" : "rgba(255, 255, 255, 0.06)",
+                        color: (context) => context.tick.value === 0 ? "rgba(197, 160, 89, 0.4)" : "rgba(0, 0, 0, 0.05)",
                         lineWidth: (context) => context.tick.value === 0 ? 2 : 1,
                         drawBorder: false
                     },
                     ticks: {
-                        color: "#94A3B8",
+                        color: "#475569",
                         callback: function(value) { return value + "%"; }
                     }
                 }
