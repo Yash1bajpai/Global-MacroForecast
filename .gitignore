@@ -16,8 +16,8 @@ __pycache__/
 logs/
 *.log
 
-# Models — binary files, regenerate via training scripts
-models_saved/
+# Models — allowed for cloud deployment (Render/Railway)
+# models_saved/
 
 # Jupyter Notebook checkpoints
 .ipynb_checkpoints/

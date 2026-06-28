@@ -82,4 +82,4 @@ Aapka Vercel link ab recruiters ko bhejne ke liye ready hai!
 - **Live API Power:** Background me website aapke Render cloud server se connect hokar latest 24hr cached predictions verify karegi.
 
 ### Resume Bullet Point:
-> *"Architected a fault-tolerant hybrid macroeconomic nowcasting platform combining Vercel edge static caching with an asynchronous FastAPI backend deployed on Render, implementing `Cache-Control` middleware and graceful degradation during cloud cold-starts."*
+> *"Full-stack ML system — FastAPI backend (Render) + Vercel frontend serving GDP forecasts for US, India, Japan, Germany with 24hr caching and static fallback."*
