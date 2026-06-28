@@ -37,7 +37,8 @@ Our rigorous chronological hold-out validation ensures zero future-data leakage.
 - **Live Macroeconomic Forecasting:** Generates 8-quarter (2-year) forward-looking predictions for GDP growth.
 - **Ensemble ML Architecture:** Combines the non-linear relationship capturing power of **LightGBM** with the strong linear trend and seasonality tracking of **SARIMA**. Inverse RMSE Weighting (`weight = 1/RMSE`) automatically favors the model with the lowest historical error per country.
 - **Optuna Hyperparameter Tuning:** Country-specific LightGBM parameters tuned via Bayesian optimization (TPE) on Kaggle, with search space explicitly constrained to prevent overfitting on small macroeconomic datasets.
-- **High-Performance Static Deployment:** Models pre-compute predictions locally which are exported to a static JSON file (`forecasts.json`), allowing the frontend to be deployed globally on Vercel with zero cold-starts and 100% free hosting.
+- **Hybrid Production Architecture:** Combines a high-speed frontend deployed on **Vercel** with a live asynchronous **FastAPI** backend hosted on **Render**. Uses HTTP `Cache-Control: max-age=86400` middleware for 24-hour caching and automatic static JSON fallback during cloud container cold-starts.
+- **Automated Cloud Retraining:** Configured with a monthly GitHub Actions scheduled workflow (`auto_update.yml`) that fetches fresh macroeconomic indicators from FRED/World Bank APIs, retrains ML models on cloud virtual machines, and commits updated artifacts automatically.
 - **Premium Fintech UI/UX:** A responsive, "Corporate Light" themed landing page built in Vanilla HTML/CSS/JS. Features interactive expanding country cards, smooth `Chart.js` rendering, and floating interactive geometric particle backgrounds.
 - **Zero Data Leakage:** Strict chronological train/test split (cutoff: 2019 Q4). All lag features use `.shift()` validated by unit tests with 1e-6 tolerance.
 

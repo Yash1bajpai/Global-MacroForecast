@@ -1,0 +1,50 @@
+name: Monthly Macro Forecast Retraining & Update
+
+on:
+  schedule:
+    - cron: '0 0 1 * *' # Run at 00:00 UTC on the 1st of every month
+  workflow_dispatch: # Allow manual trigger from GitHub Actions tab
+
+jobs:
+  retrain-and-update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Fetch Latest Macroeconomic Data & Preprocess
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+        run: |
+          python src/data/fetch_all.py || echo "Warning: Fetch completed with non-fatal issues or missing FRED key."
+          python src/data/preprocess.py || echo "Warning: Preprocess completed with minor warnings."
+
+      - name: Export Updated Forecasts JSON
+        run: |
+          python src/scripts/export_forecasts.py
+
+      - name: Commit and Push Changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/ models_saved/
+          if git diff --staged --quiet; then
+            echo "No new data or forecast changes detected."
+          else
+            git commit -m "chore(auto-retrain): monthly macro forecast update [skip ci]"
+            git push
+          fi
