@@ -13,3 +13,5 @@ Transitioning the backend to cloud hosting (Render/Railway) while implementing a
    - Instead of making 3 separate HTTP requests (`/history`, `/metrics`, `/forecast`), we created a single consolidated endpoint returning `{ "history": ..., "metrics": ..., "forecast": ... }`. This eliminates network latency overhead.
 3. **Graceful Degradation on Frontend:**
    - Updated `dashboard.js` to attempt dynamic fetching from the deployed API URL first. If the API is unreachable or waking up from a cloud cold-start, it seamlessly falls back to `data/forecasts.json` (or `MOCK_DATA`), guaranteeing 100% UI uptime for recruiters.
+4. **Live API Configuration:**
+   - Configured `API_BASE_URL` in `dashboard.js` to point directly to the live Render backend service: `https://global-macroforecast.onrender.com`. Un-ignored `models_saved/` in `.gitignore` so that all 8 serialized ML models are available in production container memory.

@@ -49,4 +49,6 @@ nginx/nginx.conf
 docker-compose.yml
 Dockerfile
 scratch_*
+DAILY_JOURNAL.md
+DEPLOYMENT_GUIDE.md
 

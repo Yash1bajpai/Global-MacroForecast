@@ -35,7 +35,7 @@ git push origin main
    - Key: `PYTHON_VERSION` | Value: `3.11.0`
    - Key: `ALLOWED_ORIGINS` | Value: `*`
 6. Neeche **"Create Web Service"** pe click kar do! 
-7. ⏳ *Note: Pehli baar deploy hone me 3 se 5 minute lagenge. Jab deployment green ho jaye, toh apna Live API URL copy kar lo* (Jaise: `https://global-macroforecast-api.onrender.com`).
+7. ⏳ *Note: Pehli baar deploy hone me 3 se 5 minute lagenge. Jab deployment green ho jaye, toh apna Live API URL copy kar lo* (Jaise: `https://global-macroforecast.onrender.com`).
 
 ---
 
@@ -48,7 +48,7 @@ Ab hume frontend ko batana hai ki aapka asli cloud backend kahan chal raha hai:
    ```javascript
    const API_BASE_URL = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" 
        ? "http://127.0.0.1:8000" 
-       : "https://global-macroforecast-api.onrender.com"; // <-- Yahan apna copied Render URL paste kar do!
+       : "https://global-macroforecast.onrender.com"; // <-- Yahan apna copied Render URL paste kar do!
    ```
 3. Ek baar terminal me ye script chala do taaki latest `forecasts.json` generate ho jaye:
    ```bash

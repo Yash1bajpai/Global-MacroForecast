@@ -1,7 +1,7 @@
 // Configurable Backend API URL (Option 1 Deployment)
 const API_BASE_URL = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" 
     ? "http://127.0.0.1:8000" 
-    : "https://global-macroforecast-api.onrender.com";
+    : "https://global-macroforecast.onrender.com";
 
 // Static Data URL for Vercel Deployment Fallback
 const STATIC_DATA_URL = "data/forecasts.json";
