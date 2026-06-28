@@ -577,8 +577,8 @@ function drawChart(data) {
     }
 
     const gradientBlue = ctx.createLinearGradient(0, 0, 0, 400);
-    gradientBlue.addColorStop(0, "rgba(56, 189, 248, 0.25)"); // Sky blue accent
-    gradientBlue.addColorStop(1, "rgba(56, 189, 248, 0.0)");
+    gradientBlue.addColorStop(0, "rgba(6, 182, 212, 0.25)"); // Cyber Teal accent
+    gradientBlue.addColorStop(1, "rgba(6, 182, 212, 0.0)");
 
     chartInstance = new Chart(ctx, {
         type: "line",
@@ -588,11 +588,11 @@ function drawChart(data) {
                 {
                     label: "Historical GDP",
                     data: historyData,
-                    borderColor: "#38BDF8",
+                    borderColor: "#06B6D4",
                     backgroundColor: gradientBlue,
                     borderWidth: 2,
-                    pointBackgroundColor: "#0B132B",
-                    pointBorderColor: "#38BDF8",
+                    pointBackgroundColor: "#090D16",
+                    pointBorderColor: "#06B6D4",
                     pointRadius: 4,
                     fill: true,
                     tension: 0.4
@@ -600,10 +600,10 @@ function drawChart(data) {
                 {
                     label: "Forecast",
                     data: forecastData,
-                    borderColor: "#F59E0B",
+                    borderColor: "#10B981",
                     borderWidth: 2.5,
                     borderDash: [5, 5],
-                    pointBackgroundColor: "#F59E0B",
+                    pointBackgroundColor: "#10B981",
                     pointRadius: 4,
                     fill: false,
                     tension: 0.4
@@ -618,10 +618,10 @@ function drawChart(data) {
                 tooltip: {
                     mode: "index",
                     intersect: false,
-                    backgroundColor: "rgba(11, 19, 43, 0.95)", // Executive Navy
+                    backgroundColor: "rgba(9, 13, 22, 0.95)", // Obsidian
                     titleColor: "#F8FAFC",
-                    bodyColor: "#F59E0B",
-                    borderColor: "rgba(245, 158, 11, 0.3)",
+                    bodyColor: "#10B981",
+                    borderColor: "rgba(6, 182, 212, 0.4)",
                     borderWidth: 1,
                     padding: 12
                 }
@@ -633,7 +633,7 @@ function drawChart(data) {
                 },
                 y: {
                     grid: {
-                        color: (context) => context.tick.value === 0 ? "rgba(245, 158, 11, 0.4)" : "rgba(255, 255, 255, 0.06)",
+                        color: (context) => context.tick.value === 0 ? "rgba(6, 182, 212, 0.4)" : "rgba(255, 255, 255, 0.06)",
                         lineWidth: (context) => context.tick.value === 0 ? 2 : 1,
                         drawBorder: false
                     },
