@@ -51,4 +51,6 @@ Dockerfile
 scratch_*
 DAILY_JOURNAL.md
 DEPLOYMENT_GUIDE.md
+*daily_journal*
+*deployment_guide*
 
