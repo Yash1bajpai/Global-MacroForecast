@@ -125,4 +125,3 @@ python src/scripts/export_forecasts.py
 
 ---
 *© 2026 Yash Bajpai. All rights reserved.*
-licence adb
