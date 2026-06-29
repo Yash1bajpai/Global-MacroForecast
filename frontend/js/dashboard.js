@@ -578,8 +578,8 @@ function drawChart(data) {
     }
 
     const gradientBlue = ctx.createLinearGradient(0, 0, 0, 400);
-    gradientBlue.addColorStop(0, "rgba(74, 142, 122, 0.25)"); // Patina Green accent
-    gradientBlue.addColorStop(1, "rgba(74, 142, 122, 0.0)");
+    gradientBlue.addColorStop(0, "rgba(157, 141, 241, 0.25)"); // Soft Periwinkle accent
+    gradientBlue.addColorStop(1, "rgba(157, 141, 241, 0.0)");
 
     chartInstance = new Chart(ctx, {
         type: "line",
@@ -589,11 +589,11 @@ function drawChart(data) {
                 {
                     label: "Historical GDP",
                     data: historyData,
-                    borderColor: "#4A8E7A",
+                    borderColor: "#9D8DF1",
                     backgroundColor: gradientBlue,
                     borderWidth: 2.5,
-                    pointBackgroundColor: "#1E232A",
-                    pointBorderColor: "#4A8E7A",
+                    pointBackgroundColor: "#1E211D",
+                    pointBorderColor: "#9D8DF1",
                     pointRadius: 4,
                     fill: true,
                     tension: 0.4
@@ -601,10 +601,10 @@ function drawChart(data) {
                 {
                     label: "Forecast",
                     data: forecastData,
-                    borderColor: "#B87333",
+                    borderColor: "#1CFEBA",
                     borderWidth: 2.5,
                     borderDash: [5, 5],
-                    pointBackgroundColor: "#B87333",
+                    pointBackgroundColor: "#1CFEBA",
                     pointRadius: 5,
                     fill: false,
                     tension: 0.4
@@ -619,10 +619,10 @@ function drawChart(data) {
                 tooltip: {
                     mode: "index",
                     intersect: false,
-                    backgroundColor: "rgba(39, 45, 55, 0.95)", // Rich Slate
-                    titleColor: "#F1F3F5",
-                    bodyColor: "#B87333",
-                    borderColor: "rgba(184, 115, 51, 0.4)",
+                    backgroundColor: "rgba(65, 70, 61, 0.95)", // Charcoal Brown
+                    titleColor: "#FFFFFF",
+                    bodyColor: "#1CFEBA",
+                    borderColor: "rgba(157, 141, 241, 0.4)",
                     borderWidth: 1,
                     padding: 12
                 }
@@ -630,16 +630,16 @@ function drawChart(data) {
             scales: {
                 x: {
                     grid: { color: "rgba(255, 255, 255, 0.06)", drawBorder: false },
-                    ticks: { color: "#9BA4B0", maxTicksLimit: 12 }
+                    ticks: { color: "#B8CDF8", maxTicksLimit: 12 }
                 },
                 y: {
                     grid: {
-                        color: (context) => context.tick.value === 0 ? "rgba(184, 115, 51, 0.4)" : "rgba(255, 255, 255, 0.06)",
+                        color: (context) => context.tick.value === 0 ? "rgba(28, 254, 186, 0.4)" : "rgba(255, 255, 255, 0.06)",
                         lineWidth: (context) => context.tick.value === 0 ? 2 : 1,
                         drawBorder: false
                     },
                     ticks: {
-                        color: "#9BA4B0",
+                        color: "#B8CDF8",
                         callback: function(value) { return value + "%"; }
                     }
                 }
