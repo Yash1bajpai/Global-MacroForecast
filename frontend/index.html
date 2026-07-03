@@ -29,12 +29,17 @@
             <span class="pulse-dot"></span>
             <span id="api-status-text">Institutional API Active (Render 24h Edge Cache)</span>
         </div>
-        <div class="toggle-container">
-            <label class="switch">
-                <input type="checkbox" id="mock-toggle" checked>
-                <span class="slider round"></span>
-            </label>
-            <span class="toggle-label">Use Mock Data</span>
+        <div style="display: flex; align-items: center; gap: 16px;">
+            <button id="theme-toggle-btn" class="theme-toggle-btn" title="Switch Light / Dark Theme">
+                <span id="theme-icon">☀️</span> <span id="theme-text">Light Mode</span>
+            </button>
+            <div class="toggle-container">
+                <label class="switch">
+                    <input type="checkbox" id="mock-toggle" checked>
+                    <span class="slider round"></span>
+                </label>
+                <span class="toggle-label">Use Mock Data</span>
+            </div>
         </div>
     </nav>
 

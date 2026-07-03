@@ -577,9 +577,12 @@ function drawChart(data) {
         chartInstance.destroy();
     }
 
-    const gradientBlue = ctx.createLinearGradient(0, 0, 0, 400);
-    gradientBlue.addColorStop(0, "rgba(157, 141, 241, 0.25)"); // Soft Periwinkle accent
-    gradientBlue.addColorStop(1, "rgba(157, 141, 241, 0.0)");
+    const isLight = document.documentElement.getAttribute("data-theme") === "light";
+    const tickColor = isLight ? "#475569" : "#94A3B8";
+    const gridColor = isLight ? "rgba(0, 0, 0, 0.06)" : "rgba(255, 255, 255, 0.06)";
+    const tooltipBg = isLight ? "rgba(255, 255, 255, 0.98)" : "rgba(30, 41, 59, 0.98)";
+    const tooltipTitle = isLight ? "#0F172A" : "#F8FAFC";
+    const tooltipBody = isLight ? "#059669" : "#34D399";
 
     chartInstance = new Chart(ctx, {
         type: "line",
@@ -589,11 +592,11 @@ function drawChart(data) {
                 {
                     label: "Historical GDP",
                     data: historyData,
-                    borderColor: "#9D8DF1",
-                    backgroundColor: gradientBlue,
+                    borderColor: isLight ? "#2563EB" : "#60A5FA",
+                    backgroundColor: isLight ? "rgba(37, 99, 235, 0.1)" : "rgba(96, 165, 250, 0.15)",
                     borderWidth: 2.5,
-                    pointBackgroundColor: "#1E211D",
-                    pointBorderColor: "#9D8DF1",
+                    pointBackgroundColor: isLight ? "#FFFFFF" : "#1E293B",
+                    pointBorderColor: isLight ? "#2563EB" : "#60A5FA",
                     pointRadius: 4,
                     fill: true,
                     tension: 0.4
@@ -601,10 +604,10 @@ function drawChart(data) {
                 {
                     label: "Forecast",
                     data: forecastData,
-                    borderColor: "#1CFEBA",
+                    borderColor: isLight ? "#059669" : "#34D399",
                     borderWidth: 2.5,
                     borderDash: [5, 5],
-                    pointBackgroundColor: "#1CFEBA",
+                    pointBackgroundColor: isLight ? "#059669" : "#34D399",
                     pointRadius: 5,
                     fill: false,
                     tension: 0.4
@@ -619,27 +622,27 @@ function drawChart(data) {
                 tooltip: {
                     mode: "index",
                     intersect: false,
-                    backgroundColor: "rgba(65, 70, 61, 0.95)", // Charcoal Brown
-                    titleColor: "#FFFFFF",
-                    bodyColor: "#1CFEBA",
-                    borderColor: "rgba(157, 141, 241, 0.4)",
+                    backgroundColor: tooltipBg,
+                    titleColor: tooltipTitle,
+                    bodyColor: tooltipBody,
+                    borderColor: isLight ? "rgba(108, 92, 231, 0.25)" : "rgba(157, 141, 241, 0.4)",
                     borderWidth: 1,
                     padding: 12
                 }
             },
             scales: {
                 x: {
-                    grid: { color: "rgba(255, 255, 255, 0.06)", drawBorder: false },
-                    ticks: { color: "#B8CDF8", maxTicksLimit: 12 }
+                    grid: { color: gridColor, drawBorder: false },
+                    ticks: { color: tickColor, maxTicksLimit: 12 }
                 },
                 y: {
                     grid: {
-                        color: (context) => context.tick.value === 0 ? "rgba(28, 254, 186, 0.4)" : "rgba(255, 255, 255, 0.06)",
+                        color: (context) => context.tick.value === 0 ? (isLight ? "rgba(13, 148, 136, 0.4)" : "rgba(28, 254, 186, 0.4)") : gridColor,
                         lineWidth: (context) => context.tick.value === 0 ? 2 : 1,
                         drawBorder: false
                     },
                     ticks: {
-                        color: "#B8CDF8",
+                        color: tickColor,
                         callback: function(value) { return value + "%"; }
                     }
                 }
@@ -699,7 +702,39 @@ function initParticles() {
     }
 }
 
+function initThemeSwitcher() {
+    const themeBtn = document.getElementById("theme-toggle-btn");
+    const themeIcon = document.getElementById("theme-icon");
+    const themeText = document.getElementById("theme-text");
+    if (!themeBtn) return;
+
+    let currentTheme = localStorage.getItem("macro_theme") || "dark";
+    applyTheme(currentTheme);
+
+    themeBtn.addEventListener("click", () => {
+        currentTheme = currentTheme === "dark" ? "light" : "dark";
+        localStorage.setItem("macro_theme", currentTheme);
+        applyTheme(currentTheme);
+        const activeCard = document.querySelector(".country-card.active");
+        if (activeCard) {
+            renderDetailedChart(activeCard.dataset.country);
+        }
+    });
+
+    function applyTheme(theme) {
+        document.documentElement.setAttribute("data-theme", theme);
+        if (theme === "light") {
+            if (themeIcon) themeIcon.textContent = "🌙";
+            if (themeText) themeText.textContent = "Dark Mode";
+        } else {
+            if (themeIcon) themeIcon.textContent = "☀️";
+            if (themeText) themeText.textContent = "Light Mode";
+        }
+    }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
+    initThemeSwitcher();
     initializeCards();
     initParticles();
 });
