@@ -717,7 +717,7 @@ function initThemeSwitcher() {
         applyTheme(currentTheme);
         const activeCard = document.querySelector(".country-card.active");
         if (activeCard) {
-            renderDetailedChart(activeCard.dataset.country);
+            expandCard(activeCard.dataset.country);
         }
     });
 
