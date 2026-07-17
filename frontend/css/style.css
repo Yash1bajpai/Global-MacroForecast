@@ -1,6 +1,6 @@
 /* Standard Simple & Clean Light/Dark Theme Palette */
 
-:root, [data-theme="dark"] {
+[data-theme="dark"], :root:not([data-theme="light"]) {
     --bg-dark: #0F172A; /* Clean Deep Slate Gray */
     --bg-panel: #1E293B; /* Sleek Dark Card Surface */
     --border-glow: rgba(96, 165, 250, 0.3);
@@ -17,19 +17,19 @@
 }
 
 [data-theme="light"] {
-    --bg-dark: #F8FAFC; /* Clean Standard Soft Light Canvas */
-    --bg-panel: #FFFFFF; /* Pure White Cards */
-    --border-glow: rgba(37, 99, 235, 0.2);
-    --border-color: #E2E8F0; /* Subtle Crisp Border */
-    --text-main: #0F172A; /* Deep Charcoal Text */
-    --text-muted: #475569; /* Sharp Slate Text */
-    --accent: #2563EB; /* Classic Royal Blue */
-    --accent-hover: #1D4ED8;
-    --gold: #0D9488; /* Teal Accent */
-    --success: #059669; /* Crisp Dark Emerald */
-    --warning: #0284C7; /* Crisp Ocean Blue */
-    --danger: #DC2626;
-    --kpi-sub-val: #2563EB;
+    --bg-dark: #F8FAFC !important; /* Clean Standard Soft Light Canvas */
+    --bg-panel: #FFFFFF !important; /* Pure White Cards */
+    --border-glow: rgba(37, 99, 235, 0.2) !important;
+    --border-color: #E2E8F0 !important; /* Subtle Crisp Border */
+    --text-main: #0F172A !important; /* Deep Charcoal Text */
+    --text-muted: #475569 !important; /* Sharp Slate Text */
+    --accent: #2563EB !important; /* Classic Royal Blue */
+    --accent-hover: #1D4ED8 !important;
+    --gold: #0D9488 !important; /* Teal Accent */
+    --success: #059669 !important; /* Crisp Dark Emerald */
+    --warning: #0284C7 !important; /* Crisp Ocean Blue */
+    --danger: #DC2626 !important;
+    --kpi-sub-val: #2563EB !important;
 }
 
 * {
