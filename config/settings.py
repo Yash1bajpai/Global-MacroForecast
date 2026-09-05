@@ -57,8 +57,9 @@ FRED_SERIES_GERMANY = {
     "sentiment":     "BCCICP02DEM460S",    # Business Tendency Surveys: Composite Business Indicator, monthly
 }
 
-# -- FRED Series: India (limited coverage on FRED)
+# -- FRED Series: India (OECD QNA mirrored on FRED)
 FRED_SERIES_INDIA = {
+    "gdp":    "NAEXKP01INQ657S",  # Real GDP, QoQ SA growth (OECD), quarterly
     "cpi":    "INDCPIALLMINMEI",  # CPI all items, monthly
     "unrate": "LRUNTTTTINQ156S",  # Unemployment rate, quarterly
 }

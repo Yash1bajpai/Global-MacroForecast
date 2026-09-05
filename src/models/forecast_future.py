@@ -246,8 +246,9 @@ def run():
         metrics_list = []
         metrics_list.append(compute_accuracy_metrics(y_test.values, lgbm_test, "LightGBM"))
 
-        if country != "india":
-            sarima_fitted = joblib.load(os.path.join(MODELS_DIR, f"{country}_sarima.pkl"))
+        sarima_path = os.path.join(MODELS_DIR, f"{country}_sarima.pkl")
+        if os.path.exists(sarima_path):
+            sarima_fitted = joblib.load(sarima_path)
             sarima_test   = sarima_fitted.get_forecast(steps=len(y_test)).predicted_mean.values
             w_s, w_l      = weights["sarima"], weights["lgbm"]
             ens_test      = w_s * sarima_test + w_l * lgbm_test
@@ -265,7 +266,8 @@ def run():
         # --- Future forecast ---
         lgbm_fc = lgbm_forecast_recursive(country, N_QUARTERS)
 
-        if country != "india":
+        sarima_path = os.path.join(MODELS_DIR, f"{country}_sarima.pkl")
+        if os.path.exists(sarima_path):
             sarima_fc, conf_int = sarima_forecast(country, series_full, N_QUARTERS)
             if sarima_fc is not None:
                 ensemble = weights["sarima"] * sarima_fc + weights["lgbm"] * lgbm_fc
@@ -322,11 +324,10 @@ def run():
         print(row)
 
     print(f"\n  Notes:")
-    print(f"  - QoQ = quarter-on-quarter log-% change")
+    print(f"  - QoQ = quarter-on-quarter log-% change (US/Germany) or published QoQ SA rate (Japan/India)")
     print(f"  - Annualized = QoQ x 4 (rough approximation)")
     print(f"  - Confidence intervals from SARIMA component only")
     print(f"  - Forecast uncertainty compounds significantly beyond Q2")
-    print(f"  - India SARIMA skipped (annual data repeated quarterly)")
 
 
 if __name__ == "__main__":

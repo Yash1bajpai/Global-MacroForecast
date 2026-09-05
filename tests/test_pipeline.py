@@ -61,7 +61,7 @@ class TestFileExistence(unittest.TestCase):
             self.assertTrue(os.path.exists(path), f"Missing: {c}_lgbm.pkl")
 
     def test_sarima_pkls_exist(self):
-        for c in ["us", "japan", "germany"]:
+        for c in ["us", "india", "japan", "germany"]:
             path = os.path.join(MODELS_DIR, f"{c}_sarima.pkl")
             self.assertTrue(os.path.exists(path), f"Missing: {c}_sarima.pkl")
 
@@ -99,6 +99,26 @@ class TestDataIntegrity(unittest.TestCase):
             self.assertLess(
                 max_diff, 1e-6,
                 f"{c}: lag1 mismatch = {max_diff:.8f} (potential lookahead leakage)"
+            )
+
+    def test_no_lookahead_leakage_in_yoy(self):
+        """gdp_growth_yoy must exclude the current quarter's target:
+        it is the sum of the 4 quarters ENDING at t-1 (shift(1).rolling(4))."""
+        for c in COUNTRIES:
+            df = pd.read_csv(
+                os.path.join(FEATURES_DIR, f"{c}_features.csv"),
+                index_col=0, parse_dates=True
+            )
+            if "gdp_growth_yoy" not in df.columns:
+                continue
+            expected = df["gdp_growth"].shift(1).rolling(4).sum()
+            actual   = df["gdp_growth_yoy"]
+            mask     = expected.notna() & actual.notna()
+            max_diff = (expected[mask] - actual[mask]).abs().max()
+            self.assertLess(
+                max_diff, 1e-6,
+                f"{c}: gdp_growth_yoy mismatch = {max_diff:.8f} "
+                f"(current quarter target leaked into feature)"
             )
 
     def test_minimum_row_count(self):
@@ -186,7 +206,7 @@ class TestModelPredictions(unittest.TestCase):
 
     def test_lgbm_test_rmse_under_threshold(self):
         """All LightGBM test RMSEs must be below threshold (India is most lenient due to COVID data swings)."""
-        thresholds = {"us": 4.0, "india": 13.0, "japan": 4.0, "germany": 4.0}
+        thresholds = {"us": 4.0, "india": 10.0, "japan": 4.0, "germany": 4.0}
         for c in COUNTRIES:
             model      = joblib.load(os.path.join(MODELS_DIR, f"{c}_lgbm.pkl"))
             X_test, y_test = self._load_test_features(c)
@@ -198,7 +218,7 @@ class TestModelPredictions(unittest.TestCase):
             )
 
     def test_sarima_loads_and_forecasts(self):
-        for c in ["us", "japan", "germany"]:
+        for c in ["us", "india", "japan", "germany"]:
             fitted = joblib.load(os.path.join(MODELS_DIR, f"{c}_sarima.pkl"))
             fc     = fitted.get_forecast(steps=4)
             preds  = fc.predicted_mean.values

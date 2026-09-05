@@ -86,9 +86,10 @@ def build_country_master(country):
     gdp = load_csv(os.path.join(raw_dir, "gdp.csv"))
     if gdp is not None:
         gdp_q = to_quarterly(gdp, "last")
-        # Detect if series is already a growth rate (contains negative values)
-        # e.g. NAEXKP01JPQ657S for Japan is QoQ % change, not a level
-        is_growth_rate = (gdp_q < 0).any()
+        # Detect if series is already a growth rate rather than a level:
+        # growth rates turn negative in recessions, while real GDP levels are
+        # always large positive numbers (index points, millions, or crores).
+        is_growth_rate = (gdp_q < 0).any() or (gdp_q.abs() < 100).all()
         if is_growth_rate:
             frames["gdp_growth"] = gdp_q
         else:
@@ -167,8 +168,11 @@ def build_country_master(country):
         oecd_monthly.index = pd.to_datetime(oecd_monthly.index)
         frames["oecd_leading_index"] = to_quarterly(oecd_monthly)
 
-    # Build master DataFrame on quarterly index
-    idx = pd.date_range("2000-01-01", "2026-07-01", freq="QS")
+    # Build master DataFrame on quarterly index.
+    # End horizon is dynamic (today + 2 quarters of buffer) so the pipeline
+    # never silently truncates as time passes; rows without GDP growth are
+    # dropped at the end.
+    idx = pd.date_range("2000-01-01", pd.Timestamp.today() + pd.DateOffset(months=9), freq="QS")
     master = pd.DataFrame(index=idx)
     for name, s in frames.items():
         master[name] = s

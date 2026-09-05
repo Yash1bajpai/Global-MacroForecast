@@ -92,21 +92,22 @@ for country in countries:
 
     lgbm_fc  = lgbm_preds(country, X_test)
 
-    if country == "india":
-        ensemble = lgbm_fc
-        w_sarima, w_lgbm = 0.0, 1.0
-        sarima_rmse = None
-        print("  SARIMA: skipped (India — annual data only)")
-    else:
-        sarima_fc = sarima_preds(country, test_idx)
+    sarima_fc = sarima_preds(country, test_idx)
+    lgbm_rmse = np.sqrt(mean_squared_error(y_test, lgbm_fc))
+
+    if sarima_fc is not None:
         sarima_rmse = np.sqrt(mean_squared_error(y_test, sarima_fc))
-        lgbm_rmse   = np.sqrt(mean_squared_error(y_test, lgbm_fc))
 
         w_sarima, w_lgbm = inverse_rmse_weights(sarima_rmse, lgbm_rmse)
         ensemble = w_sarima * sarima_fc + w_lgbm * lgbm_fc
 
         print(f"  SARIMA RMSE : {sarima_rmse:.4f}%  weight={w_sarima}")
         print(f"  LightGBM RMSE: {lgbm_rmse:.4f}%  weight={w_lgbm}")
+    else:
+        sarima_rmse = None
+        w_sarima, w_lgbm = 0.0, 1.0
+        ensemble = lgbm_fc
+        print("  SARIMA: skipped (no fitted SARIMA model saved)")
 
     ens_rmse = np.sqrt(mean_squared_error(y_test, ensemble))
     ens_mae  = mean_absolute_error(y_test, ensemble)

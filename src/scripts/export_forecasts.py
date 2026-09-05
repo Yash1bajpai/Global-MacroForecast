@@ -42,8 +42,9 @@ def export_all_forecasts():
     for country in countries:
         print(f"Processing {country}...")
         country_data: Dict[str, Any] = {}
-        
+
         # 1. History
+        series = None
         try:
             series = load_series(country)
             recent = series.tail(20)
@@ -71,7 +72,7 @@ def export_all_forecasts():
             sarima_fc = None
             conf_int = None
             sarima_path = os.path.join(PROJECT_ROOT, "models_saved", f"{country}_sarima.pkl")
-            if os.path.exists(sarima_path):
+            if os.path.exists(sarima_path) and series is not None:
                 sarima_model = joblib.load(sarima_path)
                 sarima_fc, conf_int = sarima_forecast(country, series, 8, fitted_orig=sarima_model)
             
