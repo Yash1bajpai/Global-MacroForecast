@@ -21,14 +21,14 @@ Our rigorous chronological hold-out validation ensures zero future-data leakage.
 
 ![Actual vs Predicted Forecast](screenshots/master_ensemble_forecast.png)
 
-| Economy | Acc | RMSE | MAE | Ensemble Weighting | Key Optuna Params |
+| Economy | Dir Acc | RMSE | MAE | Ensemble Weighting | Key Optuna Params |
 | :--- | :---: | :---: | :---: | :--- | :--- |
-| 🇺🇸 **US** | **87.5%** | 2.29 | 1.11 | LGBM 51% + SARIMA 49% | `lr: 0.03`, `depth: 3`, `leaves: 8` |
-| 🇯🇵 **Japan** | 75.0% | 1.63 | 0.95 | LGBM 56% + SARIMA 44% | `lr: 0.09`, `depth: 3`, `leaves: 12` |
-| 🇩🇪 **Germany** | 70.8% | 2.36 | 1.10 | LGBM 54% + SARIMA 46% | `lr: 0.05`, `depth: 4`, `leaves: 17` |
-| 🇮🇳 **India** | **84.2%** | 4.25 | 2.41 | LGBM 100% (no SARIMA) | `lr: 0.03`, `depth: 3` (Manual), `leaves: 8` |
+| 🇺🇸 **US** | **88.0%** | 2.26 | 1.10 | LGBM 51% + SARIMA 49% | `lr: 0.03`, `depth: 3`, `leaves: 8` |
+| 🇯🇵 **Japan** | 58.3% | 1.65 | 1.01 | LGBM 55% + SARIMA 45% | `lr: 0.09`, `depth: 3`, `leaves: 12` |
+| 🇩🇪 **Germany** | 52.0% | 2.37 | 1.09 | LGBM 53% + SARIMA 47% | `lr: 0.05`, `depth: 4`, `leaves: 17` |
+| 🇮🇳 **India** | **87.5%** | 7.60 | 3.54 | LGBM 50% + SARIMA 50% | `lr: 0.03`, `depth: 3` (Manual), `leaves: 8` |
 
-> *Directional Accuracy = model's ability to correctly predict GDP expansion vs contraction relative to the prior quarter. Deep trees were manually restricted for India due to low variance in annual-to-quarterly forward-filled data.*
+> *Directional Accuracy = model's ability to correctly predict GDP expansion vs contraction relative to the prior quarter. Deep trees were manually restricted for India due to low variance in the target. Japan and Germany publish QoQ growth rates that hover near zero, so sign prediction there is inherently noisy. All models were retrained on a leakage-free feature set (rolling YoY aggregates are shifted by one quarter). India's GDP target is the OECD Quarterly National Accounts QoQ series (via FRED), replacing the previously interpolated annual data — this cut India's ensemble RMSE from 11.51 to 7.60 and made a genuine India SARIMA possible.*
 
 ---
 
@@ -38,9 +38,9 @@ Our rigorous chronological hold-out validation ensures zero future-data leakage.
 - **Ensemble ML Architecture:** Combines the non-linear relationship capturing power of **LightGBM** with the strong linear trend and seasonality tracking of **SARIMA**. Inverse RMSE Weighting (`weight = 1/RMSE`) automatically favors the model with the lowest historical error per country.
 - **Optuna Hyperparameter Tuning:** Country-specific LightGBM parameters tuned via Bayesian optimization (TPE) on Kaggle, with search space explicitly constrained to prevent overfitting on small macroeconomic datasets.
 - **Hybrid Production Architecture:** Combines a high-speed frontend deployed on **Vercel** with a live asynchronous **FastAPI** backend hosted on **Render**. Uses HTTP `Cache-Control: max-age=86400` middleware for 24-hour caching and automatic static JSON fallback during cloud container cold-starts.
-- **Automated Cloud Retraining:** Configured with a monthly GitHub Actions scheduled workflow (`auto_update.yml`) that fetches fresh macroeconomic indicators from FRED/World Bank APIs, retrains ML models on cloud virtual machines, and commits updated artifacts automatically.
+- **Automated Cloud Retraining:** Configured with a monthly GitHub Actions scheduled workflow (`auto_update.yml`) that fetches fresh macroeconomic indicators from FRED/World Bank/OECD APIs, rebuilds features, retrains every model, regenerates forecasts, runs the test suite, enforces a data-freshness guard, and commits updated artifacts automatically.
 - **Premium Fintech UI/UX:** A responsive, "Corporate Light" themed landing page built in Vanilla HTML/CSS/JS. Features interactive expanding country cards, smooth `Chart.js` rendering, and floating interactive geometric particle backgrounds.
-- **Zero Data Leakage:** Strict chronological train/test split (cutoff: 2019 Q4). All lag features use `.shift()` validated by unit tests with 1e-6 tolerance.
+- **Zero Data Leakage:** Strict chronological train/test split (cutoff: 2019 Q4). All lag features and rolling aggregates (including the YoY sum) use `.shift()` validated by unit tests with 1e-6 tolerance.
 
 ---
 
@@ -58,8 +58,9 @@ Global-MacroForecast/
 ├── Optuna_Test/           # Hyperparameter tuning notebooks and CSV logs
 ├── src/
 │   ├── api/               # FastAPI backend (Development only)
-│   ├── data/              # Feature engineering scripts
-│   ├── models/            # Country-specific training pipelines
+│   ├── data/              # Ingestion, preprocessing & feature engineering
+│   │   └── build_features.py  # Reproducible lag/rolling feature builder (all countries)
+│   ├── models/            # Country-specific training pipelines (LightGBM + SARIMA)
 │   └── scripts/           # Utilities (e.g., export_forecasts.py)
 └── requirements.txt       # Python dependencies
 ```
@@ -84,6 +85,7 @@ Global-MacroForecast/
 
 **Data Sources:**
 * FRED (Federal Reserve Economic Data) API
+* OECD Quarterly National Accounts (via FRED mirroring) — quarterly GDP for India & Japan
 * World Bank Open Data
 * OECD Leading Indicators
 
@@ -108,12 +110,23 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-### 3. Generate Latest Forecasts
+### 3. Run the Full Pipeline
+Fetch the latest macro data, rebuild features, retrain all models, and evaluate:
+
+```bash
+python src/data/fetch_all.py          # FRED + World Bank + OECD (requires FRED_API_KEY in .env)
+python src/data/preprocess.py         # Build quarterly master tables
+python src/data/build_features.py     # Build lag/rolling feature tables
+python src/models/master_ensemble.py  # Retrain + regenerate model_summary.csv weights
+python tests/test_pipeline.py         # Sanity + leakage tests
+```
+
+### 4. Generate Latest Forecasts
 Run the export script to load your local Machine Learning models, compute the latest 8-quarter predictions, and save them to the static JSON file:
 ```bash
 python src/scripts/export_forecasts.py
 ```
-*Note: Pushing the updated JSON to GitHub will automatically trigger a Vercel deployment to update the live site.*
+*Note: Pushing the updated JSON to GitHub will automatically trigger a Vercel deployment to update the live site. The monthly `auto_update.yml` GitHub Action runs this entire pipeline end-to-end.*
 
 ---
 

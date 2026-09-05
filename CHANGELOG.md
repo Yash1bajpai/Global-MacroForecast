@@ -5,6 +5,42 @@ Format: **What changed → Why it was changed → Issue it solved.**
 
 ---
 
+## [1.5.0] — 2026-09-05 (Reproducible Pipeline, India Data Fix & Honest Metrics)
+
+### Fixed — CI/CD (`auto_update.yml`)
+- **Monthly workflow now actually retrains and publishes.** Previously it only refreshed raw/processed data: features, models, ensemble weights and `frontend/data/forecasts.json` were never regenerated, and the exported forecasts JSON was never committed, so the live site's static fallback stayed frozen. The workflow now runs fetch → preprocess → `build_features` → all 9 model trainers → `master_ensemble` → export → unit tests → data-freshness guard, and commits `data/`, `models_saved/` **and** `frontend/data/forecasts.json`.
+- **Fetch failures are no longer swallowed.** The old `|| echo Warning` pattern let a fully-failed data fetch (e.g., missing `FRED_API_KEY` secret — which had silently disabled all FRED fetches in CI since deployment) produce a green "successful" run. Steps now fail loudly; a freshness guard fails the run if any master table lags more than 3 quarters behind.
+
+### Fixed — Data & Feature Engineering
+- **India GDP switched to OECD Quarterly National Accounts (`NAEXKP01INQ657S`, QoQ SA, via FRED).** The hand-maintained MoSPI CSV ended at 2024-Q1, so every India forecast shown on the dashboard was for a quarter already in the past. The API-driven series runs 2004-Q3 → present, is refreshed monthly in CI, and nearly doubled India's usable history.
+- **Reproducible feature builder (`src/data/build_features.py`).** Only `build_india_features.py` existed — the US/Japan/Germany/global feature tables had no committed builder, making the pipeline unreproducible from a fresh clone. One generalized builder now reproduces all four country tables and the global panel exactly (verified bit-for-bit against the originals on unchanged source data).
+- **Removed target leakage in `gdp_growth_yoy`.** The 4-quarter YoY sum included the current quarter's target (`rolling(4)` without `shift(1)`), while recursive inference correctly used only information up to t-1. All models retrained on the corrected, fully leakage-free feature set; a dedicated regression test now guards this.
+- **`preprocess.py` horizon is dynamic** (was hardcoded to `2026-07-01`, which would silently truncate every run from 2026-Q3 onward), and the growth-vs-level detection heuristic now also handles all-positive growth series via a magnitude check.
+
+### Added — Models
+- **India SARIMA trained for the first time.** The documented reason for omitting it (annual WB data interpolated to quarterly, unusable confidence intervals) disappeared with real OECD quarterly data. India is now a true two-model ensemble (inverse-RMSE 50/50), and forecasts carry 95% confidence intervals.
+- **`src/models/us_sarima.py` committed.** The US SARIMA pkl shipped in `models_saved/` but its training script was never in the repository.
+
+### Changed — Honest Performance Numbers (2020-Q1 → present hold-out)
+| Country | Old Ensemble RMSE | New Ensemble RMSE | Dir Acc Old → New |
+|---------|:---:|:---:|:---:|
+| 🇺🇸 US | 2.29 | **2.26** | 87.5% → 88.0% |
+| 🇯🇵 Japan | 1.63 | 1.65 | 75.0% → 58.3% |
+| 🇩🇪 Germany | 2.36 | 2.37 | 70.8% → 52.0% |
+| 🇮🇳 India | 11.51 (stale summary) | **7.60** | 84.2% → 87.5% |
+
+- *Why the drops for Japan/Germany:* the previous numbers were produced with the leaky YoY feature; with it removed, directional accuracy on their near-zero QoQ values is honestly around coin-flip territory, while RMSE is essentially unchanged. US metrics slightly improved, India improved dramatically from the better data source.
+
+### Changed — Frontend & Config
+- Removed the ~400-line hardcoded `MOCK_DATA` block and the "Use Mock Data" toggle from `dashboard.js`/`index.html` (stale duplicated numbers that could render instead of real data); static JSON fallback now fails loudly instead of silently showing mock values.
+- `render.yaml`: `ALLOWED_ORIGINS` narrowed from `*` to the production Vercel origin.
+- `requirements.txt`: removed unused `xgboost` dependency.
+
+### Operational
+- `FRED_API_KEY` configured as a GitHub Actions secret (it was missing, which is why US data in CI had been stuck at 2026-Q1 since June).
+
+---
+
 ## [1.4.0] — 2026-06-28 (Option 1 Cloud Deployment & 24hr Caching)
 
 ### Added — Backend & Caching Strategy
