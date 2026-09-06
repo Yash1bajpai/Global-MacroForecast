@@ -110,6 +110,7 @@ function hasDashboardShape(data) {
     return (
         data && typeof data === "object" &&
         Array.isArray(data.forecast) && data.forecast.length > 0 &&
+        typeof data.forecast[0]?.ensemble_pred === "number" &&
         data.history && Object.keys(data.history).length > 0 &&
         data.metrics && typeof data.metrics.ensemble_rmse === "number"
     );
@@ -167,12 +168,17 @@ function getRenderData(country) {
 // --- INITIAL LOAD ---
 async function initializeCards() {
     // 1. Instant paint from the static snapshot (one shared fetch).
+    // Badge stays "Connecting…" here: the live probe in runLiveUpgrade
+    // decides between live/fallback, so a warm backend doesn't flash amber.
     try {
         const staticAll = await fetchStaticData();
         for (const c of COUNTRIES) {
-            renderCard(c, staticAll[c]);
+            try {
+                renderCard(c, staticAll[c]);
+            } catch (err) {
+                console.error(`Static render failed for ${c}; keeping placeholder.`, err);
+            }
         }
-        setApiStatus("fallback");
     } catch (err) {
         console.error("Static snapshot unavailable; waiting for live API.", err);
     }
@@ -197,6 +203,7 @@ function runLiveUpgrade() {
             })
             .catch((err) => {
                 console.warn(`Live API unavailable for ${c} (${err.message}); keeping static values.`);
+                setApiStatus("fallback");
             })
     );
 
@@ -221,25 +228,34 @@ function expandCard(country) {
         return;
     }
 
-    // Page just loaded and nothing is cached yet: wait for whichever source
-    // answers first (API with a 4s budget, then the static snapshot).
+    // Page just loaded and nothing is cached yet: prefer whichever source
+    // is fastest. The static snapshot usually wins (it is local and tiny);
+    // the live API remains the background upgrade path.
     (async () => {
         let data = null;
         try {
-            data = await fetchApiData(country);
-            cachedApiData[country] = data;
-            setApiStatus("live");
-        } catch (apiErr) {
+            const all = await fetchStaticData();
+            data = all[country];
+        } catch (staticErr) {
+            console.warn(`Static snapshot unavailable for ${country} (${staticErr.message}); trying live API.`);
+        }
+        if (!hasDashboardShape(data)) {
             try {
-                const all = await fetchStaticData();
-                data = all[country];
-            } catch (staticErr) {
-                console.error("Failed to expand card for " + country, staticErr);
+                data = await fetchApiData(country);
+                cachedApiData[country] = data;
+                setApiStatus("live");
+            } catch (apiErr) {
+                console.error(`No data available for ${country}.`, apiErr);
                 return;
             }
         }
-        if (hasDashboardShape(data)) drawChart(data);
-        else console.error(`No valid data available for ${country}.`);
+        if (currentCountry !== country) return; // user moved on/collapsed meanwhile
+        if (!hasDashboardShape(data)) {
+            console.error(`No valid data available for ${country}.`);
+            return;
+        }
+        renderCard(country, data);
+        drawChart(data);
     })();
 }
 
@@ -346,6 +362,10 @@ function drawChart(data) {
 function initParticles() {
     const container = document.getElementById('particles-container');
     if (!container) return;
+    // The container is display:none in the shipped theme; skip mounting
+    // 25 animated elements whose requestAnimationFrame loops would burn CPU
+    // while invisible.
+    if (getComputedStyle(container).display === 'none') return;
 
     const symbols = ['%', '📈', '$', '€', '¥', '₹', '📉'];
     const particleCount = 25; // Increased slightly

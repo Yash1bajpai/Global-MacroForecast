@@ -16,12 +16,16 @@ Format: **What changed → Why it was changed → Issue it solved.**
 ### Added — API Keep-Warm Uptime Bot (`.github/workflows/keep_warm.yml`)
 - A scheduled GitHub Action pings `GET /api/health` every 5 minutes around the clock, keeping the Render free-tier instance awake so real visitors no longer hit cold starts at all. Non-200 responses emit a workflow warning for visibility (no noisy failures on transient restarts).
 
-### Verified — Test Matrix (local, real browser)
-| Scenario | Result |
-|---|---|
-| Backend dead (connection refused) | All 4 cards render from static in <2.5s, amber badge |
-| Backend warm (local uvicorn) | Badge flips to green "Live API Active", cards upgrade |
-| Country card click | Chart.js renders, wrapper visible, title correct |
+### Fixed — Post-Audit Remediation (same day, dual-CLI audit findings)
+- **Chart race condition in `expandCard`** (flagged by both auditors): the no-cache click path drew whichever fetch resolved last, so rapidly switching cards could paint the wrong country's chart under another title. Now guarded by `currentCountry === country`, and the path is static-first (was API-first, which forced a 4s timeout wait before the already-loaded snapshot).
+- **`hasDashboardShape` hardening**: also validates `typeof forecast[0].ensemble_pred === "number"`, and `renderCard` calls are individually try/caught — one malformed country can no longer abort the static paint loop for the rest.
+- **Badge flicker**: "Static Snapshot (API Asleep)" is no longer set during the static paint; the badge now stays "Connecting…" until the live probe actually succeeds or fails, so warm backends never flash amber.
+- **Particle CPU burn**: `initParticles` now skips mounting when `#particles-container` is `display:none` (it is, in the shipped theme) — previously 25 invisible `requestAnimationFrame` loops ran constantly.
+- **`keep_warm.yml` curl crash**: `curl` failure under `bash -e` aborted the step before the intended warning could emit; `|| echo "000"` restores the soft-warn behavior on timeout/DNS/refused.
+- **Pulse dot colors**: `@keyframes pulse` uses `currentColor` (no mint flash in amber state); live dot uses `var(--success)` for light-theme contrast.
+
+### Audit Trail (v1.5.1)
+- Audited by opencode (GLM 5.3) and agy (Gemini 3.8 Flash High) in continuous sessions; findings triaged and fixed same-day. Known accepted risks: 5-min cron = ~8,640 runs/month (free on public repos — the repo is public; migrate to an external pinger like cron-job.org/UptimeRobot if it ever goes private), Render 750 free instance-hours/month vs ~730h for 24/7 awake (near-zero headroom), and GitHub auto-disables scheduled workflows after 60 days without a commit.
 
 ---
 
