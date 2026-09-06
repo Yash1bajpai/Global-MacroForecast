@@ -314,6 +314,28 @@ input:checked + .slider:before { transform: translateX(18px); }
     color: var(--warning);
 }
 
+/* Live backend confirmed: emerald. Static fallback: amber. */
+.api-status-badge.api-live {
+    border-color: var(--success);
+    color: var(--success);
+}
+.api-status-badge.api-live .pulse-dot {
+    background: #1CFEBA;
+    box-shadow: 0 0 8px #1CFEBA;
+}
+.api-status-badge.api-fallback {
+    border-color: #FBBF24;
+    color: #FBBF24;
+}
+.api-status-badge.api-fallback .pulse-dot {
+    background: #FBBF24;
+    box-shadow: 0 0 8px #FBBF24;
+}
+[data-theme="light"] .api-status-badge.api-fallback .pulse-dot {
+    background: #D97706;
+    box-shadow: 0 0 8px #D97706;
+}
+
 /* Simple Theme Toggle Button */
 .theme-toggle-btn {
     background: var(--bg-panel);
@@ -336,9 +358,9 @@ input:checked + .slider:before { transform: translateX(18px); }
 .pulse-dot {
     width: 8px;
     height: 8px;
-    background: #1CFEBA;
+    background: var(--warning);
     border-radius: 50%;
-    box-shadow: 0 0 8px #1CFEBA;
+    box-shadow: 0 0 8px var(--warning);
     animation: pulse 2s infinite;
 }
 

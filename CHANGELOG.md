@@ -5,6 +5,26 @@ Format: **What changed → Why it was changed → Issue it solved.**
 
 ---
 
+## [1.5.1] — 2026-09-06 (Resilient Frontend & API Keep-Warm)
+
+### Fixed — Dashboard Cold-Start Behavior (`frontend/js/dashboard.js`)
+- **Static-first rendering.** Country cards previously initialized sequentially against the live API with a 4s timeout each — with a sleeping Render backend (free-tier cold start measured at ~73s) the dashboard could show `--` placeholders for up to ~16 seconds. Cards now paint from the bundled `forecasts.json` snapshot within ~300ms and upgrade to live API data in the background.
+- **Removed a silent-crash path.** The fallback previously returned `undefined` when the static JSON loaded but lacked a country key, crashing `initializeCards` on `data.forecast[0]` and leaving cards stuck on `--` with no error surfaced. All data paths now run through a payload-shape guard (`hasDashboardShape`) that keeps placeholders and logs a clear error instead.
+- **Honest API status badge.** The navbar badge previously always showed a green pulsing "Institutional API Active" dot regardless of backend state. It now reflects reality: green "Live API Active (Render)" when the backend answers, amber "Static Snapshot (API Asleep)" when serving the snapshot, "Connecting to Live API…" while undetermined.
+- **Cold-start retry ladder.** After the static paint, the live upgrade retries up to 6 rounds (45s apart, covering the ~60-90s worst-case Render wake), then stops — the static snapshot remains authoritative.
+
+### Added — API Keep-Warm Uptime Bot (`.github/workflows/keep_warm.yml`)
+- A scheduled GitHub Action pings `GET /api/health` every 5 minutes around the clock, keeping the Render free-tier instance awake so real visitors no longer hit cold starts at all. Non-200 responses emit a workflow warning for visibility (no noisy failures on transient restarts).
+
+### Verified — Test Matrix (local, real browser)
+| Scenario | Result |
+|---|---|
+| Backend dead (connection refused) | All 4 cards render from static in <2.5s, amber badge |
+| Backend warm (local uvicorn) | Badge flips to green "Live API Active", cards upgrade |
+| Country card click | Chart.js renders, wrapper visible, title correct |
+
+---
+
 ## [1.5.0] — 2026-09-05 (Reproducible Pipeline, India Data Fix & Honest Metrics)
 
 ### Fixed — CI/CD (`auto_update.yml`)

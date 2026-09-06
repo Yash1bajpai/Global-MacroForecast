@@ -64,7 +64,6 @@ cards.forEach(card => {
         cards.forEach(c => c.classList.remove("active"));
         e.currentTarget.classList.add("active");
 
-        chartTitle.textContent = COUNTRY_TITLES[country] + " - 8-Quarter Forecast";
         expandCard(country);
     });
 });
@@ -76,84 +75,180 @@ function collapseAll() {
     chartWrapper.classList.add("hidden");
 }
 
-// --- FETCH DATA (Option 1 Hybrid Caching & Graceful Degradation) ---
+// --- DATA FETCHING (Resilient: instant static snapshot + live API upgrade) ---
+// Render strategy: paint cards from the bundled static JSON immediately
+// (~300ms), then upgrade to the live Render API in the background. A cold or
+// sleeping backend can never leave the dashboard blank -- visitors see the
+// static snapshot until the API answers.
+const COUNTRIES = ["us", "germany", "japan", "india"];
+const API_TIMEOUT_MS = 4000; // per-request budget for the live API
+
 let cachedStaticData = null;
 let cachedApiData = {};
 
-async function fetchData(country) {
-    if (cachedApiData[country]) {
-        return cachedApiData[country];
-    }
+const apiStatusText = document.getElementById("api-status-text");
+const apiStatusBadge = apiStatusText ? apiStatusText.parentElement : null;
 
-    try {
-        // Attempt to fetch from live FastAPI endpoint (cached for 24h by backend Cache-Control header)
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 4000); // 4s timeout for cloud cold-starts
-
-        const res = await fetch(`${API_BASE_URL}/api/dashboard/${country}`, { signal: controller.signal });
-        clearTimeout(timeoutId);
-
-        if (!res.ok) throw new Error(`API status ${res.status}`);
-        const apiData = await res.json();
-        cachedApiData[country] = apiData;
-        return apiData;
-    } catch (error) {
-        console.warn(`Live API unreachable or cold-starting (${error.message}). Gracefully falling back to static forecasts.json...`);
-        try {
-            if (!cachedStaticData) {
-                const res = await fetch(STATIC_DATA_URL);
-                if (!res.ok) throw new Error("Failed to load static forecasts.json");
-                cachedStaticData = await res.json();
-            }
-            if (cachedStaticData[country]) {
-                return cachedStaticData[country];
-            }
-        } catch (staticErr) {
-            console.error("Both live API and static JSON failed for " + country, staticErr);
-            throw staticErr;
+function setApiStatus(state) {
+    if (!apiStatusText) return;
+    if (state === "live") {
+        apiStatusText.textContent = "Live API Active (Render)";
+        if (apiStatusBadge) {
+            apiStatusBadge.classList.add("api-live");
+            apiStatusBadge.classList.remove("api-fallback");
+        }
+    } else if (state === "fallback") {
+        apiStatusText.textContent = "Static Snapshot (API Asleep)";
+        if (apiStatusBadge) {
+            apiStatusBadge.classList.add("api-fallback");
+            apiStatusBadge.classList.remove("api-live");
         }
     }
+}
+
+function hasDashboardShape(data) {
+    return (
+        data && typeof data === "object" &&
+        Array.isArray(data.forecast) && data.forecast.length > 0 &&
+        data.history && Object.keys(data.history).length > 0 &&
+        data.metrics && typeof data.metrics.ensemble_rmse === "number"
+    );
+}
+
+async function fetchStaticData() {
+    if (cachedStaticData) return cachedStaticData;
+    const res = await fetch(STATIC_DATA_URL);
+    if (!res.ok) throw new Error(`Static forecasts.json failed (HTTP ${res.status})`);
+    cachedStaticData = await res.json();
+    return cachedStaticData;
+}
+
+async function fetchApiData(country) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+    try {
+        const res = await fetch(`${API_BASE_URL}/api/dashboard/${country}`, { signal: controller.signal });
+        if (!res.ok) throw new Error(`API status ${res.status}`);
+        const data = await res.json();
+        if (!hasDashboardShape(data)) throw new Error("Malformed API payload");
+        return data;
+    } finally {
+        clearTimeout(timeoutId);
+    }
+}
+
+function renderCard(country, data) {
+    if (!hasDashboardShape(data)) {
+        console.error(`Invalid dashboard payload for ${country}; keeping placeholder.`);
+        return;
+    }
+    const valEl = document.getElementById("val-" + country);
+    const trendEl = document.getElementById("trend-" + country);
+    const rmseEl = document.getElementById("rmse-" + country);
+    if (!valEl || !trendEl || !rmseEl) return;
+
+    const nextQtr = data.forecast[0].ensemble_pred;
+    valEl.textContent = (nextQtr > 0 ? "+" : "") + nextQtr.toFixed(2) + "%";
+
+    const r = nextQtr / 100.0;
+    const annRate = (Math.pow(1 + r, 4) - 1) * 100.0;
+    setTrend(trendEl, annRate, nextQtr, false);
+
+    rmseEl.textContent = data.metrics.ensemble_rmse.toFixed(2) + "%";
+}
+
+// Best available data without waiting on the network.
+function getRenderData(country) {
+    if (cachedApiData[country]) return cachedApiData[country];
+    if (cachedStaticData && cachedStaticData[country]) return cachedStaticData[country];
+    return null;
 }
 
 // --- INITIAL LOAD ---
 async function initializeCards() {
-    for (const c of ["us", "germany", "japan", "india"]) {
-        try {
-            const data = await fetchData(c);
-
-            const nextQtr = data.forecast[0].ensemble_pred;
-            const valEl = document.getElementById("val-" + c);
-            const trendEl = document.getElementById("trend-" + c);
-            const rmseEl = document.getElementById("rmse-" + c);
-
-            valEl.textContent = (nextQtr > 0 ? "+" : "") + nextQtr.toFixed(2) + "%";
-
-            const r = nextQtr / 100.0;
-            const annRate = (Math.pow(1 + r, 4) - 1) * 100.0;
-            setTrend(trendEl, annRate, nextQtr, false);
-
-            rmseEl.textContent = data.metrics.ensemble_rmse.toFixed(2) + "%";
-        } catch (err) {
-            console.error("Failed to initialize card for " + c, err);
+    // 1. Instant paint from the static snapshot (one shared fetch).
+    try {
+        const staticAll = await fetchStaticData();
+        for (const c of COUNTRIES) {
+            renderCard(c, staticAll[c]);
         }
+        setApiStatus("fallback");
+    } catch (err) {
+        console.error("Static snapshot unavailable; waiting for live API.", err);
     }
+
+    // 2. Background upgrade from the live API (parallel, bounded retries).
+    runLiveUpgrade();
+}
+
+let upgradeRounds = 0;
+function runLiveUpgrade() {
+    upgradeRounds += 1;
+    const pending = COUNTRIES.filter((c) => !cachedApiData[c]);
+    if (pending.length === 0) return;
+
+    const attempts = pending.map((c) =>
+        fetchApiData(c)
+            .then((data) => {
+                cachedApiData[c] = data;
+                renderCard(c, data);
+                setApiStatus("live");
+                if (currentCountry === c) drawChart(data);
+            })
+            .catch((err) => {
+                console.warn(`Live API unavailable for ${c} (${err.message}); keeping static values.`);
+            })
+    );
+
+    Promise.all(attempts).then(() => {
+        const stillPending = COUNTRIES.some((c) => !cachedApiData[c]);
+        // Render free-tier cold-starts can take ~60-90s: retry a few times.
+        if (stillPending && upgradeRounds < 6) {
+            setTimeout(runLiveUpgrade, 45000);
+        }
+    });
 }
 
 // --- EXPAND CARD LOGIC ---
-async function expandCard(country) {
+function expandCard(country) {
     chartWrapper.classList.remove("hidden");
     chartWrapper.classList.add("visible");
+    chartTitle.textContent = COUNTRY_TITLES[country] + " - 8-Quarter Forecast";
 
-    try {
-        const data = await fetchData(country);
-        drawChart(data);
-    } catch (err) {
-        console.error("Failed to expand card for " + country, err);
+    const ready = getRenderData(country);
+    if (ready) {
+        drawChart(ready);
+        return;
     }
+
+    // Page just loaded and nothing is cached yet: wait for whichever source
+    // answers first (API with a 4s budget, then the static snapshot).
+    (async () => {
+        let data = null;
+        try {
+            data = await fetchApiData(country);
+            cachedApiData[country] = data;
+            setApiStatus("live");
+        } catch (apiErr) {
+            try {
+                const all = await fetchStaticData();
+                data = all[country];
+            } catch (staticErr) {
+                console.error("Failed to expand card for " + country, staticErr);
+                return;
+            }
+        }
+        if (hasDashboardShape(data)) drawChart(data);
+        else console.error(`No valid data available for ${country}.`);
+    })();
 }
 
 // --- CHART.JS ---
 function drawChart(data) {
+    if (!hasDashboardShape(data)) {
+        console.error("drawChart: invalid dashboard payload, refusing to render.");
+        return;
+    }
     const ctx = document.getElementById("gdpChart").getContext("2d");
 
     const histDates = Object.keys(data.history);

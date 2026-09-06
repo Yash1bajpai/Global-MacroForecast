@@ -1,0 +1,32 @@
+name: API Keep-Warm (Uptime Bot)
+
+# Keeps the Render free-tier backend out of cold-start sleep by pinging the
+# health endpoint around the clock. Render sleeps an instance after ~15 min
+# of inactivity; a lightweight GET every 5 minutes prevents that.
+
+on:
+  schedule:
+    - cron: '*/5 * * * *' # every 5 minutes, UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: keep-warm
+  cancel-in-progress: false
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Ping API health endpoint
+        run: |
+          url="https://global-macroforecast.onrender.com/api/health"
+          code=$(curl -s -o /tmp/health.json -w "%{http_code}" --max-time 120 "$url")
+          echo "HTTP $code from $url"
+          cat /tmp/health.json || true
+          if [ "$code" != "200" ]; then
+            echo "::warning::API health check returned $code (instance may be restarting)"
+          fi
