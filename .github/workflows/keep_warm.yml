@@ -24,7 +24,9 @@ jobs:
       - name: Ping API health endpoint
         run: |
           url="https://global-macroforecast.onrender.com/api/health"
-          code=$(curl -s -o /tmp/health.json -w "%{http_code}" --max-time 120 "$url")
+          # '|| echo 000' keeps the step alive under bash -e when curl itself
+          # fails (timeout/DNS/refused); a non-200 then warns instead of erroring.
+          code=$(curl -s -o /tmp/health.json -w "%{http_code}" --max-time 120 "$url" || echo "000")
           echo "HTTP $code from $url"
           cat /tmp/health.json || true
           if [ "$code" != "200" ]; then
