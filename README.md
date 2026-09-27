@@ -24,9 +24,9 @@ Our rigorous chronological hold-out validation ensures zero future-data leakage.
 | Economy | Dir Acc | RMSE | MAE | Ensemble Weighting | Key Optuna Params |
 | :--- | :---: | :---: | :---: | :--- | :--- |
 | 🇺🇸 **US** | **88.0%** | 2.26 | 1.10 | LGBM 51% + SARIMA 49% | `lr: 0.03`, `depth: 3`, `leaves: 8` |
-| 🇯🇵 **Japan** | 58.3% | 1.65 | 1.01 | LGBM 55% + SARIMA 45% | `lr: 0.09`, `depth: 3`, `leaves: 12` |
-| 🇩🇪 **Germany** | 52.0% | 2.37 | 1.09 | LGBM 53% + SARIMA 47% | `lr: 0.05`, `depth: 4`, `leaves: 17` |
-| 🇮🇳 **India** | **87.5%** | 7.60 | 3.54 | LGBM 50% + SARIMA 50% | `lr: 0.03`, `depth: 3` (Manual), `leaves: 8` |
+| 🇯🇵 **Japan** | 58.3% | 1.63 | 1.00 | LGBM 55% + SARIMA 45% | `lr: 0.09`, `depth: 3`, `leaves: 12` |
+| 🇩🇪 **Germany** | 52.0% | 2.36 | 1.07 | LGBM 53% + SARIMA 47% | `lr: 0.05`, `depth: 4`, `leaves: 17` |
+| 🇮🇳 **India** | **87.5%** | 7.60 | 3.46 | LGBM 50% + SARIMA 50% | `lr: 0.03`, `depth: 3` (Manual), `leaves: 8` |
 
 > *Directional Accuracy = model's ability to correctly predict GDP expansion vs contraction relative to the prior quarter. Deep trees were manually restricted for India due to low variance in the target. Japan and Germany publish QoQ growth rates that hover near zero, so sign prediction there is inherently noisy. All models were retrained on a leakage-free feature set (rolling YoY aggregates are shifted by one quarter). India's GDP target is the OECD Quarterly National Accounts QoQ series (via FRED), replacing the previously interpolated annual data — this cut India's ensemble RMSE from 11.51 to 7.60 and made a genuine India SARIMA possible.*
 
