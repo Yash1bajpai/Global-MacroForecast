@@ -1,0 +1,22 @@
+{
+  "us": {
+    "legacy_ensemble_rmse": 2.2614807724412205,
+    "fixed_train_mean_rmse": 2.2742543638880455,
+    "n": 26
+  },
+  "india": {
+    "legacy_ensemble_rmse": 7.426106991719363,
+    "fixed_train_mean_rmse": 7.452847993386918,
+    "n": 26
+  },
+  "japan": {
+    "legacy_ensemble_rmse": 1.6410765474860114,
+    "fixed_train_mean_rmse": 1.8357459086751062,
+    "n": 26
+  },
+  "germany": {
+    "legacy_ensemble_rmse": 2.36083621376918,
+    "fixed_train_mean_rmse": 2.571059968094582,
+    "n": 26
+  }
+}

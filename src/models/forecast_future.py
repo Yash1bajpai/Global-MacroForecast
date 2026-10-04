@@ -128,6 +128,8 @@ def lgbm_forecast_recursive(country, n_steps, fitted=None, X=None, y=None):
     if X is None or y is None:
         X, y = load_features(country)
     
+    if hasattr(fitted, "feature_name") and list(X.columns) != list(fitted.feature_name()):
+        raise ValueError("Feature schema differs from saved model; do not mix causal tables with legacy artifacts")
     last_date  = X.index[-1]
     future_idx = get_future_index(last_date, n_steps)
 
@@ -165,55 +167,6 @@ def lgbm_forecast_recursive(country, n_steps, fitted=None, X=None, y=None):
     return pd.Series(predictions, index=future_idx)
 
 
-def compute_accuracy_metrics(y_true, y_pred, label=""):
-    """RMSE, MAE, MAPE, SMAPE, Directional Accuracy, R2, Theil U."""
-    y_true = np.array(y_true)
-    y_pred = np.array(y_pred)
-    n      = len(y_true)
-
-    rmse = np.sqrt(mean_squared_error(y_true, y_pred))
-    mae  = mean_absolute_error(y_true, y_pred)
-
-    nonzero = y_true != 0
-    mape  = np.mean(np.abs((y_true[nonzero] - y_pred[nonzero]) / y_true[nonzero])) * 100
-    smape = np.mean(2 * np.abs(y_true - y_pred) / (np.abs(y_true) + np.abs(y_pred) + 1e-8)) * 100
-
-    dir_acc = np.mean(np.sign(y_true[1:]) == np.sign(y_pred[1:])) * 100
-
-    ss_res = np.sum((y_true - y_pred) ** 2)
-    ss_tot = np.sum((y_true - y_true.mean()) ** 2)
-    r2     = 1 - ss_res / ss_tot if ss_tot > 0 else 0.0
-
-    naive     = y_true[:-1]
-    theil_num = np.sqrt(np.mean((y_true[1:] - y_pred[1:]) ** 2))
-    theil_den = np.sqrt(np.mean((y_true[1:] - naive) ** 2))
-    theil_u   = theil_num / theil_den if theil_den > 0 else np.nan
-
-    return {
-        "label":       label,
-        "n":           n,
-        "RMSE":        round(rmse, 4),
-        "MAE":         round(mae, 4),
-        "MAPE":        round(mape, 2),
-        "SMAPE":       round(smape, 2),
-        "Dir_Acc":     round(dir_acc, 1),
-        "R2":          round(r2, 4),
-        "Theil_U":     round(theil_u, 4) if not np.isnan(theil_u) else "N/A",
-    }
-
-
-def print_accuracy_table(metrics_list):
-    cols = ["label", "n", "RMSE", "MAE", "MAPE", "SMAPE", "Dir_Acc", "R2", "Theil_U"]
-    header = f"  {'Model':<14} {'N':>4} {'RMSE':>7} {'MAE':>7} {'MAPE':>7} {'SMAPE':>7} {'DirAcc':>7} {'R2':>7} {'TheilU':>8}"
-    print(header)
-    print(f"  {'-'*76}")
-    for m in metrics_list:
-        print(
-            f"  {m['label']:<14} {m['n']:>4} {m['RMSE']:>7} {m['MAE']:>7} "
-            f"{m['MAPE']:>6}% {m['SMAPE']:>6}% {m['Dir_Acc']:>6}% {m['R2']:>7} {str(m['Theil_U']):>8}"
-        )
-
-
 def run():
     weights_map = load_ensemble_weights()
 
@@ -221,7 +174,7 @@ def run():
     print("GDP NOWCAST & FORECAST SYSTEM")
     print(f"Generated : {datetime.now().strftime('%Y-%m-%d %H:%M')}")
     print(f"Horizon   : {N_QUARTERS} quarters ahead")
-    print(f"Method    : Inverse-RMSE weighted SARIMA + LightGBM Ensemble")
+    print("Method    : Legacy ensemble; not a validated forecasting product")
     print("=" * 70)
 
     all_forecasts   = {}
@@ -239,29 +192,8 @@ def run():
         y_test      = y[y.index >= TEST_START]
         weights     = weights_map.get(country, {"sarima": 0.0, "lgbm": 1.0})
 
-        # --- Test-set accuracy ---
-        lgbm_model  = joblib.load(os.path.join(MODELS_DIR, f"{country}_lgbm.pkl"))
-        lgbm_test   = lgbm_model.predict(X_test)
-
-        metrics_list = []
-        metrics_list.append(compute_accuracy_metrics(y_test.values, lgbm_test, "LightGBM"))
-
-        sarima_path = os.path.join(MODELS_DIR, f"{country}_sarima.pkl")
-        if os.path.exists(sarima_path):
-            sarima_fitted = joblib.load(sarima_path)
-            sarima_test   = sarima_fitted.get_forecast(steps=len(y_test)).predicted_mean.values
-            w_s, w_l      = weights["sarima"], weights["lgbm"]
-            ens_test      = w_s * sarima_test + w_l * lgbm_test
-            metrics_list.append(compute_accuracy_metrics(y_test.values, sarima_test, "SARIMA"))
-            metrics_list.append(compute_accuracy_metrics(y_test.values, ens_test,    "Ensemble"))
-        else:
-            ens_test = lgbm_test
-            metrics_list.append(compute_accuracy_metrics(y_test.values, ens_test, "Ensemble"))
-
-        print(f"\n  Test-Set Accuracy (2020-Q1 to {y_test.index[-1].strftime('%Y-Q') + str(y_test.index[-1].quarter)})")
-        print(f"  Theil U < 1 = better than naive random walk  |  Dir Acc = direction correct %")
-        print_accuracy_table(metrics_list)
-        all_metrics[country] = metrics_list
+        print('Legacy deployment forecast: historical accuracy is not validated.')
+        print('See reports/evaluation.json for revised-data rolling research scores.')
 
         # --- Future forecast ---
         lgbm_fc = lgbm_forecast_recursive(country, N_QUARTERS)

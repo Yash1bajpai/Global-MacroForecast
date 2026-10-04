@@ -18,6 +18,7 @@ from src.models.forecast_future import (
 )
 
 def export_all_forecasts():
+    raise RuntimeError("Production export disabled pending causal model approval. Use the isolated candidate pipeline.")
     print("Starting generation of static forecasts...")
     
     countries = ["us", "germany", "japan", "india"]

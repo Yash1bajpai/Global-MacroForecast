@@ -1,0 +1,238 @@
+{
+  "us": {
+    "choice": {
+      "lgbm_config": 1,
+      "sarima_order": 1,
+      "w_sarima": 0.5,
+      "w_lgbm": 0.5
+    },
+    "validation_n": 16,
+    "test_n": 26,
+    "test_start": "2020-01-01T00:00:00",
+    "test_end": "2026-04-01T00:00:00",
+    "validation": {
+      "ensemble": {
+        "rmse": 0.2827411392064007,
+        "mae": 0.20074908839441216,
+        "sign_accuracy": 100.0
+      },
+      "mean": {
+        "rmse": 0.2947507316804984,
+        "mae": 0.2247391026385318,
+        "sign_accuracy": 100.0
+      },
+      "last": {
+        "rmse": 0.3449809069204995,
+        "mae": 0.2712947961018508,
+        "sign_accuracy": 100.0
+      },
+      "seasonal": {
+        "rmse": 0.40424493233084235,
+        "mae": 0.3333368822266425,
+        "sign_accuracy": 100.0
+      },
+      "always_positive": 100.0
+    },
+    "test": {
+      "ensemble": {
+        "rmse": 2.4508238793395396,
+        "mae": 1.2069856109733303,
+        "sign_accuracy": 84.61538461538461
+      },
+      "mean": {
+        "rmse": 2.2801206949511545,
+        "mae": 1.056067175034483,
+        "sign_accuracy": 88.46153846153845
+      },
+      "last": {
+        "rmse": 3.3657616058831445,
+        "mae": 1.810646122459963,
+        "sign_accuracy": 76.92307692307693
+      },
+      "seasonal": {
+        "rmse": 3.321702472440784,
+        "mae": 1.841911991835451,
+        "sign_accuracy": 76.92307692307693
+      },
+      "always_positive": 88.46153846153845
+    },
+    "protocol": "revised-data-t2-embargo-v1"
+  },
+  "india": {
+    "choice": {
+      "lgbm_config": 0,
+      "sarima_order": 1,
+      "w_sarima": 1.0,
+      "w_lgbm": 0.0
+    },
+    "validation_n": 16,
+    "test_n": 26,
+    "test_start": "2020-01-01T00:00:00",
+    "test_end": "2026-04-01T00:00:00",
+    "validation": {
+      "ensemble": {
+        "rmse": 0.6728896559181345,
+        "mae": 0.545338310416171,
+        "sign_accuracy": 100.0
+      },
+      "mean": {
+        "rmse": 0.6832427703248694,
+        "mae": 0.5524615894343403,
+        "sign_accuracy": 100.0
+      },
+      "last": {
+        "rmse": 0.6231313514433,
+        "mae": 0.5256331128660292,
+        "sign_accuracy": 100.0
+      },
+      "seasonal": {
+        "rmse": 0.82469805963793,
+        "mae": 0.6861477812192367,
+        "sign_accuracy": 100.0
+      },
+      "always_positive": 100.0
+    },
+    "test": {
+      "ensemble": {
+        "rmse": 10.439897799310234,
+        "mae": 5.175180091275565,
+        "sign_accuracy": 88.46153846153845
+      },
+      "mean": {
+        "rmse": 7.468116591408759,
+        "mae": 3.3486476905416795,
+        "sign_accuracy": 92.3076923076923
+      },
+      "last": {
+        "rmse": 11.284619593948351,
+        "mae": 6.323889322174386,
+        "sign_accuracy": 84.61538461538461
+      },
+      "seasonal": {
+        "rmse": 8.563051227443783,
+        "mae": 4.828980731446327,
+        "sign_accuracy": 92.3076923076923
+      },
+      "always_positive": 92.3076923076923
+    },
+    "protocol": "revised-data-t2-embargo-v1"
+  },
+  "japan": {
+    "choice": {
+      "lgbm_config": 0,
+      "sarima_order": 1,
+      "w_sarima": 1.0,
+      "w_lgbm": 0.0
+    },
+    "validation_n": 16,
+    "test_n": 26,
+    "test_start": "2020-01-01T00:00:00",
+    "test_end": "2026-04-01T00:00:00",
+    "validation": {
+      "ensemble": {
+        "rmse": 0.8779098487387939,
+        "mae": 0.510267093664453,
+        "sign_accuracy": 75.0
+      },
+      "mean": {
+        "rmse": 0.8825905524179929,
+        "mae": 0.5166765857176232,
+        "sign_accuracy": 75.0
+      },
+      "last": {
+        "rmse": 0.975826634481284,
+        "mae": 0.6268922102875991,
+        "sign_accuracy": 75.0
+      },
+      "seasonal": {
+        "rmse": 0.9589862282867748,
+        "mae": 0.6344922130630022,
+        "sign_accuracy": 50.0
+      },
+      "always_positive": 75.0
+    },
+    "test": {
+      "ensemble": {
+        "rmse": 1.8726875415120596,
+        "mae": 1.0151612846299245,
+        "sign_accuracy": 65.38461538461539
+      },
+      "mean": {
+        "rmse": 1.8391164213983862,
+        "mae": 0.9338590215725859,
+        "sign_accuracy": 69.23076923076923
+      },
+      "last": {
+        "rmse": 2.3883734649763144,
+        "mae": 1.3823174522199912,
+        "sign_accuracy": 65.38461538461539
+      },
+      "seasonal": {
+        "rmse": 2.8169444599029365,
+        "mae": 1.6694251879401658,
+        "sign_accuracy": 53.84615384615385
+      },
+      "always_positive": 69.23076923076923
+    },
+    "protocol": "revised-data-t2-embargo-v1"
+  },
+  "germany": {
+    "choice": {
+      "lgbm_config": 0,
+      "sarima_order": 1,
+      "w_sarima": 1.0,
+      "w_lgbm": 0.0
+    },
+    "validation_n": 16,
+    "test_n": 26,
+    "test_start": "2020-01-01T00:00:00",
+    "test_end": "2026-04-01T00:00:00",
+    "validation": {
+      "ensemble": {
+        "rmse": 0.5164217286901853,
+        "mae": 0.419552098316718,
+        "sign_accuracy": 75.0
+      },
+      "mean": {
+        "rmse": 0.5374920202059529,
+        "mae": 0.44944364442284573,
+        "sign_accuracy": 75.0
+      },
+      "last": {
+        "rmse": 0.575523193355937,
+        "mae": 0.45994655922561023,
+        "sign_accuracy": 75.0
+      },
+      "seasonal": {
+        "rmse": 0.8325172614622915,
+        "mae": 0.6878334085773652,
+        "sign_accuracy": 56.25
+      },
+      "always_positive": 75.0
+    },
+    "test": {
+      "ensemble": {
+        "rmse": 2.80662951542146,
+        "mae": 1.351349442353423,
+        "sign_accuracy": 53.84615384615385
+      },
+      "mean": {
+        "rmse": 2.5744303095360244,
+        "mae": 1.1057164997805784,
+        "sign_accuracy": 61.53846153846154
+      },
+      "last": {
+        "rmse": 3.840912266887357,
+        "mae": 1.9459016990489215,
+        "sign_accuracy": 50.0
+      },
+      "seasonal": {
+        "rmse": 3.7891907194215664,
+        "mae": 1.9819272544378208,
+        "sign_accuracy": 53.84615384615385
+      },
+      "always_positive": 61.53846153846154
+    },
+    "protocol": "revised-data-t2-embargo-v1"
+  }
+}
