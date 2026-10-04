@@ -1,92 +1,46 @@
-name: Monthly Macro Forecast Retraining & Update
+name: Monthly MacroForecast Candidate (no auto-promotion)
 
 on:
   schedule:
-    - cron: '0 0 1 * *' # Run at 00:00 UTC on the 1st of every month
-  workflow_dispatch: # Allow manual trigger from GitHub Actions tab
+    - cron: '0 0 1 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
-  retrain-and-update:
+  candidate:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-          cache: 'pip'
-
-      - name: Install Dependencies
-        run: |
-          pip install --upgrade pip
-          pip install -r requirements.txt
-
-      # --- Data refresh (fail loudly: stale data must never look like success) ---
-      - name: Fetch Latest Macroeconomic Data
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Fetch and preprocess (never publish)
         env:
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
         run: |
           python src/data/fetch_all.py
           python src/data/preprocess.py
-          python src/data/build_features.py
-
-      # --- Retrain every model (LightGBM + SARIMA per country, global panel) ---
-      - name: Retrain Models
+      - name: Check data freshness
         run: |
-          python src/models/us_lgbm.py
-          python src/models/japan_lgbm.py
-          python src/models/germany_lgbm.py
-          python src/models/india_lgbm.py
-          python src/models/global_lgbm.py
-          python src/models/us_sarima.py
-          python src/models/japan_sarima.py
-          python src/models/germany_sarima.py
-          python src/models/india_sarima.py
-          python src/models/master_ensemble.py
-
-      # --- Regenerate ensemble weights + static JSON for the Vercel frontend ---
-      - name: Export Updated Forecasts JSON
-        run: python src/scripts/export_forecasts.py
-
-      # --- Guard rails: tests must pass and data must be reasonably fresh ---
-      - name: Run Pipeline Tests
-        run: python -m unittest tests.test_pipeline -v
-
-      - name: Check Data Freshness
-        run: |
-          python - <<'EOF'
+          python - <<'PY'
           import pandas as pd
-          from pathlib import Path
-
-          # Last complete quarter must be at most 3 quarters behind the
-          # freshest observation in each master table (OECD QNA lags ~2).
-          last_complete_q = pd.Timestamp.today().to_period("Q").start_time - pd.DateOffset(months=3)
-          oldest_allowed  = last_complete_q - pd.DateOffset(months=9)
-
-          for c in ["us", "india", "japan", "germany"]:
-              path = Path("data/processed") / f"{c}_master.csv"
-              last = pd.to_datetime(pd.read_csv(path, index_col=0).index.max())
-              print(f"{c}: last observation {last.date()}")
-              assert last >= oldest_allowed, (
-                  f"{c}_master.csv is stale: last observation {last.date()} "
-                  f"is older than {oldest_allowed.date()}"
-              )
-          print("Freshness check passed.")
-          EOF
-
-      - name: Commit and Push Changes
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/ models_saved/ frontend/data/forecasts.json
-          if git diff --staged --quiet; then
-            echo "No new data or forecast changes detected."
-          else
-            git commit -m "chore(auto-retrain): monthly data refresh, model retraining & forecast update [skip ci]"
-            git push
-          fi
+          for c in ['us', 'india', 'japan', 'germany']:
+              df = pd.read_csv(f'data/processed/{c}_master.csv', index_col=0, parse_dates=True)
+              assert df.index.max() >= pd.Timestamp.today().to_period('Q').start_time - pd.DateOffset(months=12), c
+          PY
+      - run: python -m unittest discover -s tests -v
+      - name: Train isolated candidates
+        run: python -m src.models.train_candidate --output candidate_artifacts
+      - name: Preserve candidate reports even when gate rejects
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: macroforecast-research-candidate
+          path: candidate_artifacts/
+      - name: Fail-closed metric gate (no approved causal incumbent yet)
+        run: python -m src.models.metric_gate --candidate candidate_artifacts/evaluation.json
+      # No git push, deployment export or write permission. Review required.

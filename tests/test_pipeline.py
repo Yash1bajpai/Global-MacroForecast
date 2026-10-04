@@ -1,278 +1,132 @@
-"""
-test_pipeline.py
-Unit tests for the GDP Nowcast & Forecast pipeline.
-
-Tests:
-  1. All required files exist (raw processed, features, models)
-  2. Master CSVs have correct structure and no null GDP growth
-  3. Feature lag columns have no look-ahead leakage
-  4. Train/test split is clean (no overlap)
-  5. Global features has all 4 countries
-  6. Models load and produce finite predictions
-  7. LightGBM test RMSE within acceptable bounds
-  8. SARIMA loads and forecasts 4 steps
-  9. Ensemble weights sum to 1.0
-  10. model_summary.csv has all 4 countries
-
-Run from project root:
-    python tests/test_pipeline.py
-"""
-
-import os
-import sys
+"""Causal invariance, split, model selection, baseline and promotion tests."""
+import copy
 import unittest
-import warnings
-warnings.filterwarnings("ignore")
-
+from pathlib import Path
 import numpy as np
 import pandas as pd
-import joblib
+from src.data.build_features import causal_features, COUNTRIES
+from src.models.validation import train_indices, select, blend, metrics, quality_gate, evaluate
 
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, PROJECT_ROOT)
-
-from config.settings import DATA_PROCESSED_DIR, MODELS_DIR
-
-FEATURES_DIR = os.path.join(PROJECT_ROOT, "data", "features")
-COUNTRIES    = ["us", "india", "japan", "germany"]
-TEST_START   = "2020-01-01"
-TRAIN_END    = "2019-10-01"
+ROOT = Path(__file__).resolve().parents[1]
 
 
-class TestFileExistence(unittest.TestCase):
-
-    def test_master_csvs_exist(self):
-        for c in COUNTRIES:
-            path = os.path.join(DATA_PROCESSED_DIR, f"{c}_master.csv")
-            self.assertTrue(os.path.exists(path), f"Missing: {c}_master.csv")
-
-    def test_feature_csvs_exist(self):
-        for c in COUNTRIES:
-            path = os.path.join(FEATURES_DIR, f"{c}_features.csv")
-            self.assertTrue(os.path.exists(path), f"Missing: {c}_features.csv")
-
-    def test_global_files_exist(self):
-        self.assertTrue(os.path.exists(os.path.join(DATA_PROCESSED_DIR, "global_master.csv")))
-        self.assertTrue(os.path.exists(os.path.join(FEATURES_DIR, "global_features.csv")))
-
-    def test_lgbm_pkls_exist(self):
-        for c in COUNTRIES:
-            path = os.path.join(MODELS_DIR, f"{c}_lgbm.pkl")
-            self.assertTrue(os.path.exists(path), f"Missing: {c}_lgbm.pkl")
-
-    def test_sarima_pkls_exist(self):
-        for c in ["us", "india", "japan", "germany"]:
-            path = os.path.join(MODELS_DIR, f"{c}_sarima.pkl")
-            self.assertTrue(os.path.exists(path), f"Missing: {c}_sarima.pkl")
-
-    def test_global_lgbm_exists(self):
-        self.assertTrue(os.path.exists(os.path.join(MODELS_DIR, "global_lgbm.pkl")))
-
-    def test_model_summary_exists(self):
-        self.assertTrue(os.path.exists(os.path.join(DATA_PROCESSED_DIR, "model_summary.csv")))
+def fixture():
+    index = pd.date_range('2004-01-01', periods=84, freq='QS')
+    x = np.arange(len(index))
+    return pd.DataFrame(dict(gdp_growth=1+np.sin(x)*.2, cpi_growth=x*.01,
+                             recession=x%2, covid_shock=x%2, wb_gdp_growth_pct=x*5), index=index)
 
 
-class TestDataIntegrity(unittest.TestCase):
+class PipelineTests(unittest.TestCase):
+    def test_current_and_previous_and_future_values_cannot_change_features(self):
+        master = fixture()
+        original = causal_features(master)
+        for i in (20, 30, 60):
+            changed = master.copy()
+            changed.iloc[i-1:] += 999
+            candidate = causal_features(changed)
+            pd.testing.assert_series_equal(original.drop(columns='gdp_growth').iloc[i],
+                                           candidate.drop(columns='gdp_growth').iloc[i])
 
-    def test_gdp_growth_no_nulls(self):
-        for c in COUNTRIES:
-            df = pd.read_csv(
-                os.path.join(DATA_PROCESSED_DIR, f"{c}_master.csv"),
-                index_col=0, parse_dates=True
-            )
-            null_count = df["gdp_growth"].isnull().sum()
-            self.assertEqual(null_count, 0, f"{c}: gdp_growth has {null_count} nulls in master CSV")
+    def test_feature_whitelist(self):
+        cols = causal_features(fixture()).columns
+        self.assertNotIn('recession', cols)
+        self.assertNotIn('covid_shock', cols)
+        self.assertFalse(any('wb_' in c for c in cols))
+        self.assertNotIn('gdp_growth_lag1', cols)
+        self.assertNotIn('cpi_growth', cols)
 
-    def test_no_lookahead_leakage_in_lags(self):
-        """gdp_growth_lag1 at time t must exactly equal gdp_growth at t-1."""
-        for c in COUNTRIES:
-            df = pd.read_csv(
-                os.path.join(FEATURES_DIR, f"{c}_features.csv"),
-                index_col=0, parse_dates=True
-            )
-            if "gdp_growth_lag1" not in df.columns:
-                continue
-            expected = df["gdp_growth"].shift(1)
-            actual   = df["gdp_growth_lag1"]
-            mask     = expected.notna() & actual.notna()
-            max_diff = (expected[mask] - actual[mask]).abs().max()
-            self.assertLess(
-                max_diff, 1e-6,
-                f"{c}: lag1 mismatch = {max_diff:.8f} (potential lookahead leakage)"
-            )
+    def test_embargo(self):
+        index = fixture().index
+        origin = index[30]
+        self.assertEqual(index[train_indices(index, origin)][-1], index[28])
 
-    def test_no_lookahead_leakage_in_yoy(self):
-        """gdp_growth_yoy must exclude the current quarter's target:
-        it is the sum of the 4 quarters ENDING at t-1 (shift(1).rolling(4))."""
-        for c in COUNTRIES:
-            df = pd.read_csv(
-                os.path.join(FEATURES_DIR, f"{c}_features.csv"),
-                index_col=0, parse_dates=True
-            )
-            if "gdp_growth_yoy" not in df.columns:
-                continue
-            expected = df["gdp_growth"].shift(1).rolling(4).sum()
-            actual   = df["gdp_growth_yoy"]
-            mask     = expected.notna() & actual.notna()
-            max_diff = (expected[mask] - actual[mask]).abs().max()
-            self.assertLess(
-                max_diff, 1e-6,
-                f"{c}: gdp_growth_yoy mismatch = {max_diff:.8f} "
-                f"(current quarter target leaked into feature)"
-            )
+    def test_gap_and_duplicate_fail(self):
+        with self.assertRaises(ValueError):
+            causal_features(fixture().drop(fixture().index[30]))
+        with self.assertRaises(ValueError):
+            causal_features(pd.concat([fixture(), fixture().iloc[[-1]]]))
 
-    def test_minimum_row_count(self):
-        min_rows = {"us": 90, "india": 45, "japan": 90, "germany": 90}
-        for c in COUNTRIES:
-            df = pd.read_csv(os.path.join(FEATURES_DIR, f"{c}_features.csv"), index_col=0)
-            self.assertGreater(
-                len(df), min_rows[c],
-                f"{c}_features.csv has only {len(df)} rows (expected > {min_rows[c]})"
-            )
+    def test_metrics_known_values_and_invalid(self):
+        result = metrics([1, -1], [2, -2])
+        self.assertEqual(result['rmse'], 1.)
+        self.assertEqual(result['sign_accuracy'], 100.)
+        for a, p in [([], []), ([1], [np.nan]), ([1], [1, 2])]:
+            with self.assertRaises(ValueError):
+                metrics(a, p)
 
-    def test_train_test_no_overlap(self):
-        for c in COUNTRIES:
-            df = pd.read_csv(
-                os.path.join(FEATURES_DIR, f"{c}_features.csv"),
-                index_col=0, parse_dates=True
-            )
-            train_idx = set(df[df.index <= TRAIN_END].index)
-            test_idx  = set(df[df.index >= TEST_START].index)
-            overlap   = train_idx & test_idx
-            self.assertEqual(len(overlap), 0, f"{c}: {len(overlap)} dates overlap between train and test")
+    def test_selection_uses_only_validation(self):
+        v = pd.DataFrame(dict(actual=[1., 2.], lgbm_0=[1., 2.], lgbm_1=[4., 5.],
+                              sarima_0=[8., 9.], sarima_1=[7., 8.]))
+        selection = select(v)
+        self.assertEqual(selection['w_sarima'], 0.)
+        self.assertEqual(selection['lgbm_config'], 0)
+        self.assertTrue(np.array_equal(blend(v, selection), [1., 2.]))
 
-    def test_train_and_test_nonempty(self):
-        for c in COUNTRIES:
-            df = pd.read_csv(
-                os.path.join(FEATURES_DIR, f"{c}_features.csv"),
-                index_col=0, parse_dates=True
-            )
-            self.assertGreater(len(df[df.index <= TRAIN_END]), 0, f"{c}: train set is empty")
-            self.assertGreater(len(df[df.index >= TEST_START]), 0, f"{c}: test set is empty")
+    def test_invalid_sarima_excluded(self):
+        v = pd.DataFrame(dict(actual=[1., 2.], lgbm_0=[1., 2.], lgbm_1=[4., 5.],
+                              sarima_0=[None, None], sarima_1=[None, None]))
+        self.assertEqual(select(v)['w_sarima'], 0.)
 
-    def test_global_has_4_countries(self):
-        df = pd.read_csv(os.path.join(FEATURES_DIR, "global_features.csv"), index_col=0)
-        self.assertIn("country_id", df.columns, "global_features.csv missing 'country_id' column")
-        unique_ids = df["country_id"].nunique()
-        self.assertEqual(unique_ids, 4, f"global_features has {unique_ids} unique country_ids, expected 4")
+    def test_gate_rejects_no_skill_missing_incumbent_changed_dates_regression_nan(self):
+        metric = dict(rmse=1., mae=1.)
+        c = dict(protocol='revised-data-t2-embargo-v1', test_start='2020', test_end='2026', test_n=26)
+        for split in ['validation', 'test']:
+            c[split] = {k: dict(metric) for k in ['ensemble', 'mean', 'last', 'seasonal']}
+            c[split]['ensemble'] = dict(rmse=.5, mae=.5)
+        candidate = {country: copy.deepcopy(c) for country in COUNTRIES}
+        quality_gate(candidate, copy.deepcopy(candidate))
+        for mode in ('baseline', 'nan', 'regression', 'date', 'protocol'):
+            bad = copy.deepcopy(candidate)
+            if mode == 'protocol':
+                bad['us']['protocol'] = 'legacy'
+            elif mode == 'date':
+                bad['us']['test_end'] = '2027'
+            else:
+                bad['us']['test']['ensemble']['rmse'] = {'baseline': 1., 'nan': np.nan, 'regression': .6}[mode]
+            with self.assertRaises(ValueError):
+                quality_gate(bad, candidate)
+        with self.assertRaises(ValueError):
+            quality_gate(candidate)
 
-    def test_recession_dummy_is_binary(self):
-        for c in COUNTRIES:
-            df = pd.read_csv(os.path.join(DATA_PROCESSED_DIR, f"{c}_master.csv"), index_col=0)
-            if "recession" not in df.columns:
-                continue
-            unique_vals = set(df["recession"].dropna().unique())
-            self.assertTrue(
-                unique_vals.issubset({0, 1}),
-                f"{c}: recession dummy has non-binary values: {unique_vals}"
-            )
+    def test_real_country_features_and_finite_fit(self):
+        from src.models.validation import fit_lgbm, CONFIGS
+        for country in COUNTRIES:
+            master = pd.read_csv(ROOT / f'data/processed/{country}_master.csv', index_col=0, parse_dates=True)
+            df = causal_features(master)
+            model = fit_lgbm(df.drop(columns='gdp_growth').iloc[:-2], df.gdp_growth.iloc[:-2], CONFIGS[0])
+            self.assertTrue(np.isfinite(model.predict(df.drop(columns='gdp_growth').iloc[-2:])).all())
 
-    def test_gdp_growth_range_plausible(self):
-        """QoQ GDP growth should be between -15% and +15% (COVID extremes)."""
-        for c in COUNTRIES:
-            df = pd.read_csv(os.path.join(DATA_PROCESSED_DIR, f"{c}_master.csv"), index_col=0)
-            mn = df["gdp_growth"].min()
-            mx = df["gdp_growth"].max()
-            self.assertGreater(mn, -40, f"{c}: GDP growth min {mn:.2f} is suspiciously low")
-            self.assertLess(mx, 30,    f"{c}: GDP growth max {mx:.2f} is suspiciously high")
+    def test_test_labels_do_not_change_validation_choice_or_first_test_prediction(self):
+        master = fixture()
+        first, predictions = evaluate(master)
+        changed = master.copy()
+        changed.loc[changed.index >= '2020-01-01', 'gdp_growth'] += 500
+        second, changed_predictions = evaluate(changed)
+        self.assertEqual(first['choice'], second['choice'])
+        self.assertEqual(predictions.loc['2020-01-01T00:00:00', 'ensemble'],
+                         changed_predictions.loc['2020-01-01T00:00:00', 'ensemble'])
+        self.assertNotEqual(first['test']['mean']['rmse'], second['test']['mean']['rmse'])
 
+    def test_saved_reports_have_consistent_predictions_and_dates(self):
+        import json
+        reports = json.loads((ROOT / 'reports/evaluation.json').read_text())
+        for country in COUNTRIES:
+            frame = pd.read_csv(ROOT / f'reports/{country}_origins.csv', index_col=0)
+            test = frame[pd.to_datetime(frame.index) >= '2020-01-01']
+            measured = metrics(test.actual, test.ensemble)
+            self.assertEqual(len(test), reports[country]['test_n'])
+            for metric in ['rmse', 'mae', 'sign_accuracy']:
+                self.assertAlmostEqual(measured[metric], reports[country]['test']['ensemble'][metric], places=10)
 
-class TestModelPredictions(unittest.TestCase):
-
-    def _load_test_features(self, country):
-        df = pd.read_csv(
-            os.path.join(FEATURES_DIR, f"{country}_features.csv"),
-            index_col=0, parse_dates=True
-        )
-        drop = [c for c in ["gdp_level", "country", "country_id"] if c in df.columns]
-        df   = df.drop(columns=drop)
-        X    = df.drop(columns=["gdp_growth"])
-        y    = df["gdp_growth"]
-        return X[X.index >= TEST_START], y[y.index >= TEST_START]
-
-    def test_lgbm_predictions_correct_length(self):
-        for c in COUNTRIES:
-            model  = joblib.load(os.path.join(MODELS_DIR, f"{c}_lgbm.pkl"))
-            X_test, _ = self._load_test_features(c)
-            preds  = model.predict(X_test)
-            self.assertEqual(len(preds), len(X_test), f"{c}: prediction length {len(preds)} != {len(X_test)}")
-
-    def test_lgbm_predictions_finite(self):
-        for c in COUNTRIES:
-            model  = joblib.load(os.path.join(MODELS_DIR, f"{c}_lgbm.pkl"))
-            X_test, _ = self._load_test_features(c)
-            preds  = model.predict(X_test)
-            self.assertTrue(np.all(np.isfinite(preds)), f"{c}: LightGBM output contains inf/nan")
-
-    def test_lgbm_test_rmse_under_threshold(self):
-        """All LightGBM test RMSEs must be below threshold (India is most lenient due to COVID data swings)."""
-        thresholds = {"us": 4.0, "india": 10.0, "japan": 4.0, "germany": 4.0}
-        for c in COUNTRIES:
-            model      = joblib.load(os.path.join(MODELS_DIR, f"{c}_lgbm.pkl"))
-            X_test, y_test = self._load_test_features(c)
-            preds      = model.predict(X_test)
-            rmse       = float(np.sqrt(np.mean((y_test.values - preds) ** 2)))
-            self.assertLess(
-                rmse, thresholds[c],
-                f"{c}: LightGBM test RMSE {rmse:.3f}% exceeds threshold {thresholds[c]}%"
-            )
-
-    def test_sarima_loads_and_forecasts(self):
-        for c in ["us", "india", "japan", "germany"]:
-            fitted = joblib.load(os.path.join(MODELS_DIR, f"{c}_sarima.pkl"))
-            fc     = fitted.get_forecast(steps=4)
-            preds  = fc.predicted_mean.values
-            self.assertEqual(len(preds), 4, f"{c}: SARIMA forecast length != 4")
-            self.assertTrue(np.all(np.isfinite(preds)), f"{c}: SARIMA forecast contains inf/nan")
-
-    def test_global_lgbm_covers_all_countries(self):
-        df = pd.read_csv(
-            os.path.join(FEATURES_DIR, "global_features.csv"),
-            index_col=0, parse_dates=True
-        )
-        drop   = [c for c in ["gdp_level", "country"] if c in df.columns]
-        df     = df.drop(columns=drop)
-        X      = df.drop(columns=["gdp_growth"])
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            model  = joblib.load(os.path.join(MODELS_DIR, "global_lgbm.pkl"))
-        X_test = X[X.index >= TEST_START]
-        preds  = model.predict(X_test)
-        self.assertEqual(len(preds), len(X_test))
-        self.assertTrue(np.all(np.isfinite(preds)))
+    def test_full_synthetic_rolling_run(self):
+        report, origins = evaluate(fixture())
+        self.assertEqual(report['validation_n'], 16)
+        self.assertTrue(np.isfinite(origins.ensemble).all())
+        dates = pd.to_datetime(origins.index)
+        train_ends = pd.to_datetime(origins.train_end)
+        self.assertTrue((train_ends <= dates - pd.DateOffset(months=6)).all())
 
 
-class TestEnsemble(unittest.TestCase):
-
-    def test_ensemble_weights_sum_to_one(self):
-        df = pd.read_csv(os.path.join(DATA_PROCESSED_DIR, "model_summary.csv"))
-        for _, row in df.iterrows():
-            w_sum = float(row["w_sarima"]) + float(row["w_lgbm"])
-            self.assertAlmostEqual(
-                w_sum, 1.0, places=3,
-                msg=f"{row['country']}: weights sum to {w_sum}, expected 1.0"
-            )
-
-    def test_model_summary_has_4_countries(self):
-        df = pd.read_csv(os.path.join(DATA_PROCESSED_DIR, "model_summary.csv"))
-        self.assertEqual(len(df), 4, f"model_summary.csv has {len(df)} rows, expected 4")
-
-    def test_ensemble_rmse_not_worse_than_both_models(self):
-        """Ensemble RMSE must not exceed both individual model RMSEs simultaneously."""
-        df = pd.read_csv(os.path.join(DATA_PROCESSED_DIR, "model_summary.csv"))
-        for _, row in df.iterrows():
-            if row["sarima_rmse"] == "skipped":
-                continue
-            ens    = float(row["ensemble_rmse"])
-            lgbm   = float(row["lgbm_rmse"])
-            sarima = float(row["sarima_rmse"])
-            worst  = max(sarima, lgbm)
-            self.assertLess(
-                ens, worst * 1.05,
-                f"{row['country']}: ensemble {ens:.4f} worse than both models "
-                f"(sarima={sarima:.4f}, lgbm={lgbm:.4f})"
-            )
-
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     unittest.main(verbosity=2)

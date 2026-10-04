@@ -71,7 +71,7 @@ def to_quarterly(series, method="mean"):
 def annual_to_quarterly(series):
     end = series.index.max() + pd.offsets.MonthEnd(12)
     q_idx = pd.date_range(series.index.min(), end, freq="QS")
-    return series.reindex(series.index.union(q_idx)).sort_index().ffill().bfill(limit=1).reindex(q_idx)
+    return series.reindex(series.index.union(q_idx)).sort_index().ffill().reindex(q_idx)
 
 
 def log_diff_pct(series):
@@ -120,10 +120,7 @@ def build_country_master(country):
             frames["gdp_level"] = gdp_q
             frames["gdp_growth"] = log_diff_pct(gdp_q)
         else:
-            # Fallback to annual World Bank growth
-            wb_gdp = load_csv(os.path.join(raw_dir, "wb_gdp_growth_pct.csv"))
-            if wb_gdp is not None:
-                frames["gdp_growth"] = annual_to_quarterly(wb_gdp)
+            raise ValueError(f'{country}: quarterly GDP is missing; annual forward-fill is not a quarterly target')
 
     # Monthly FRED series -> quarterly mean
     monthly_cols = {

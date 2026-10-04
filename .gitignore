@@ -54,3 +54,6 @@ DEPLOYMENT_GUIDE.md
 *daily_journal*
 *deployment_guide*
 
+
+# Candidate outputs are quarantined until reviewed
+candidate_artifacts/

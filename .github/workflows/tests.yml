@@ -1,0 +1,23 @@
+name: Causal pipeline tests
+on:
+  pull_request:
+  push:
+    branches: [main, 'fix/**']
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -r requirements-test.txt
+      - run: python -m unittest discover -s tests -v
+      - name: Reproduce evaluation
+        run: python -m src.models.validation --output candidate_artifacts
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rolling-evaluation
+          path: candidate_artifacts/
