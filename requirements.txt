@@ -1,37 +1,14 @@
-# ── Data & ML ──────────────────────────────────────────────
+# Lean runtime-only dependency set for the Vercel serverless deployment of
+# src/api/main.py (branch vercel-preview only; main keeps the full dev set
+# for Render and GitHub Actions).
+# Pinned to the same versions as main's requirements.txt where overlapping.
+fastapi==0.115.12
+uvicorn==0.34.3
+pydantic==2.11.5
+joblib==1.4.2
 pandas==2.2.3
 numpy==2.2.6
 scikit-learn==1.6.1
 statsmodels==0.14.4
 lightgbm==4.6.0
-joblib==1.4.2
-
-# ── FRED API ────────────────────────────────────────────────
-fredapi==0.5.2
 python-dotenv==1.1.0
-requests==2.32.3
-
-# ── Multi-country Data APIs ─────────────────────────────────
-wbdata==1.1.0
-
-# ── Resilience ───────────────────────────────────────────────
-tenacity==9.1.2
-
-# ── Backend API ─────────────────────────────────────────────
-fastapi==0.115.12
-uvicorn==0.34.3
-pydantic==2.11.5
-aiofiles==24.1.0
-
-# ── Database (reserved for future Phase 2 DB integration) ───
-# sqlalchemy==2.0.41
-
-# ── Notebooks & EDA ─────────────────────────────────────────
-matplotlib==3.10.3
-seaborn==0.13.2
-plotly==6.1.2
-jupyter==1.1.1
-ipykernel==6.29.5
-
-# ── Phase 2 : Explainability ────────────────────────────────
-# shap==0.47.2   ← Requires Microsoft C++ Build Tools. Install in Phase 2.
