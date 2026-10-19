@@ -4,27 +4,25 @@
 import ctypes
 import glob
 import os
+import re
 import shutil
-import sys
 
 
 def _ensure_libgomp() -> None:
     """Vercel's Python runtime image has no system libgomp (OpenMP), which
     LightGBM's native library needs (lib_lightgbm.so has DT_NEEDED
     libgomp.so.1 and no RPATH). scikit-learn's wheel bundles a libgomp copy
-    under a mangled SONAME, so preloading it does not satisfy the linker.
-    Instead expose it under the exact name libgomp.so.1 via LD_LIBRARY_PATH.
-    LD_LIBRARY_PATH is only read at process start, so the first boot re-execs
-    itself once with the path set. No-op where libgomp already exists
-    (local dev, Render)."""
+    but under a mangled SONAME (e.g. libgomp-a34b3233.so.1.0.0), so a plain
+    ctypes preload does not register the name the linker looks for. Make a
+    copy in /tmp with its SONAME string rewritten to libgomp.so.1 and
+    preload that with RTLD_GLOBAL; the linker then treats the dependency as
+    already loaded. No-op where a system libgomp exists (local, Render)."""
     if os.environ.get("_GMF_FORCE_GOMP_PATCH") != "1":
         try:
             ctypes.CDLL("libgomp.so.1")
             return  # System libgomp present; nothing to do.
         except OSError:
             pass
-    if os.environ.get("_GMF_GOMP_REEXEC"):
-        return  # Already re-executed once; never loop.
     try:
         import sklearn  # noqa: F401
 
@@ -35,19 +33,23 @@ def _ensure_libgomp() -> None:
         )
         if not hits:
             return  # Let the LightGBM import raise its own clear error.
-        target_dir = "/tmp/_gmf_libgomp"
-        os.makedirs(target_dir, exist_ok=True)
-        link = os.path.join(target_dir, "libgomp.so.1")
-        if not os.path.exists(link):
-            try:
-                os.symlink(hits[0], link)
-            except OSError:
-                shutil.copyfile(hits[0], link)
-        os.environ["LD_LIBRARY_PATH"] = (
-            target_dir + os.pathsep + os.environ.get("LD_LIBRARY_PATH", "")
-        )
-        os.environ["_GMF_GOMP_REEXEC"] = "1"
-        os.execv(sys.executable, [sys.executable] + sys.argv)
+        data = bytearray(open(hits[0], "rb").read())
+        match = re.search(rb"libgomp[\w.\-]*\.so[\w.]*\x00", bytes(data))
+        if not match:
+            return
+        soname = match.group(0)[:-1]
+        patched = b"libgomp.so.1"
+        if soname == patched:
+            ctypes.CDLL(hits[0], mode=ctypes.RTLD_GLOBAL)
+            return
+        pad = len(soname) - len(patched)
+        if pad < 0:
+            return
+        data[match.start():match.end()] = patched + b"\x00" * (pad + 1)
+        target = "/tmp/_gmf_libgomp.so.1"
+        with open(target, "wb") as f:
+            f.write(bytes(data))
+        ctypes.CDLL(target, mode=ctypes.RTLD_GLOBAL)
     except Exception:
         pass  # Fall through; LightGBM will raise its own clear error.
 
