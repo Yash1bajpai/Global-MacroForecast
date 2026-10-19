@@ -92,7 +92,7 @@ const apiStatusBadge = apiStatusText ? apiStatusText.parentElement : null;
 function setApiStatus(state) {
     if (!apiStatusText) return;
     if (state === "live") {
-        apiStatusText.textContent = "Live API Active (Render)";
+        apiStatusText.textContent = "Live API Active";
         if (apiStatusBadge) {
             apiStatusBadge.classList.add("api-live");
             apiStatusBadge.classList.remove("api-fallback");
