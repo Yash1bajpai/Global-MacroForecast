@@ -34,18 +34,18 @@ def _ensure_libgomp() -> None:
         if not hits:
             return  # Let the LightGBM import raise its own clear error.
         data = bytearray(open(hits[0], "rb").read())
-        match = re.search(rb"libgomp[\w.\-]*\.so[\w.]*\x00", bytes(data))
-        if not match:
-            return
-        soname = match.group(0)[:-1]
-        patched = b"libgomp.so.1"
-        if soname == patched:
+        sonames = set(re.findall(rb"libgomp-[\w.\-]+\.so[\w.]*", bytes(data)))
+        if not sonames:
+            # SONAME already plain (or unrecognised); try loading as-is.
             ctypes.CDLL(hits[0], mode=ctypes.RTLD_GLOBAL)
             return
+        soname = sorted(sonames, key=len)[-1]
+        patched = b"libgomp.so.1"
         pad = len(soname) - len(patched)
         if pad < 0:
             return
-        data[match.start():match.end()] = patched + b"\x00" * (pad + 1)
+        count = data.count(soname)
+        data = bytearray(bytes(data).replace(soname + b"\x00", patched + b"\x00" * (pad + 1)))
         target = "/tmp/_gmf_libgomp.so.1"
         with open(target, "wb") as f:
             f.write(bytes(data))
