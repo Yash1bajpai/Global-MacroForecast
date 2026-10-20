@@ -2,9 +2,9 @@
   "germany/cpi": {
     "continuity_vs_replaced_file": {
       "growth_corr": 1.0,
-      "max_level_deviation": 2.220446049250313e-16,
-      "overlap": 303,
-      "overlap_end": "2025-03-01",
+      "max_level_deviation": 0.0,
+      "overlap": 321,
+      "overlap_end": "2026-09-01",
       "overlap_start": "2000-01-01"
     },
     "description": "CPI all items, index 2015=100, monthly",
@@ -17,10 +17,10 @@
   },
   "germany/indpro": {
     "continuity_vs_replaced_file": {
-      "growth_corr": 0.9990769113708378,
-      "max_level_deviation": 0.007757243081825571,
-      "overlap": 97,
-      "overlap_end": "2024-01-01",
+      "growth_corr": 1.0,
+      "max_level_deviation": 0.0,
+      "overlap": 319,
+      "overlap_end": "2026-07-01",
       "overlap_start": "2000-01-01"
     },
     "description": "Production volume, industry excl. construction, SA, 2015=100, monthly",
@@ -31,12 +31,23 @@
     "source": "OECD SDMX API",
     "url": "https://sdmx.oecd.org/public/rest/data/OECD.SDD.STES,DSD_KEI@DF_KEI,4.0/DEU.M.PRVM.IX.BTE.Y._Z"
   },
+  "germany/oecd_leading_index": {
+    "continuity_vs_replaced_file": null,
+    "description": "Composite leading indicator (CLI), amplitude adjusted, long-term average=100, monthly",
+    "fetched": "2026-10-20",
+    "first": "2000-01-01",
+    "last": "2026-09-01",
+    "replaced_file_note": "replaces a contaminated file (identical for JP and DE, many series per date); old values are not a valid baseline",
+    "rows": 321,
+    "source": "OECD SDMX API",
+    "url": "https://sdmx.oecd.org/public/rest/data/OECD.SDD.STES,DSD_STES@DF_CLI,/DEU.M.LI.IX._Z.AA.IX._Z.H"
+  },
   "india/cpi": {
     "continuity_vs_replaced_file": {
       "growth_corr": 1.0,
-      "max_level_deviation": 2.220446049250313e-16,
-      "overlap": 303,
-      "overlap_end": "2025-03-01",
+      "max_level_deviation": 0.0,
+      "overlap": 320,
+      "overlap_end": "2026-08-01",
       "overlap_start": "2000-01-01"
     },
     "description": "CPI all items, index 2015=100, monthly",
@@ -49,10 +60,10 @@
   },
   "japan/cpi": {
     "continuity_vs_replaced_file": {
-      "growth_corr": 0.9807130057561282,
-      "max_level_deviation": 0.0009331864047203986,
-      "overlap": 258,
-      "overlap_end": "2021-06-01",
+      "growth_corr": 1.0,
+      "max_level_deviation": 0.0,
+      "overlap": 320,
+      "overlap_end": "2026-08-01",
       "overlap_start": "2000-01-01"
     },
     "description": "CPI all items, index 2015=100, monthly",
@@ -65,10 +76,10 @@
   },
   "japan/indpro": {
     "continuity_vs_replaced_file": {
-      "growth_corr": 0.9998142828668792,
-      "max_level_deviation": 0.005807480510894747,
-      "overlap": 291,
-      "overlap_end": "2024-03-01",
+      "growth_corr": 1.0,
+      "max_level_deviation": 0.0,
+      "overlap": 319,
+      "overlap_end": "2026-07-01",
       "overlap_start": "2000-01-01"
     },
     "description": "Production volume, industry excl. construction, SA, 2015=100, monthly",
@@ -78,5 +89,16 @@
     "rows": 319,
     "source": "OECD SDMX API",
     "url": "https://sdmx.oecd.org/public/rest/data/OECD.SDD.STES,DSD_KEI@DF_KEI,4.0/JPN.M.PRVM.IX.BTE.Y._Z"
+  },
+  "japan/oecd_leading_index": {
+    "continuity_vs_replaced_file": null,
+    "description": "Composite leading indicator (CLI), amplitude adjusted, long-term average=100, monthly",
+    "fetched": "2026-10-20",
+    "first": "2000-01-01",
+    "last": "2026-09-01",
+    "replaced_file_note": "replaces a contaminated file (identical for JP and DE, many series per date); old values are not a valid baseline",
+    "rows": 321,
+    "source": "OECD SDMX API",
+    "url": "https://sdmx.oecd.org/public/rest/data/OECD.SDD.STES,DSD_STES@DF_CLI,/JPN.M.LI.IX._Z.AA.IX._Z.H"
   }
 }

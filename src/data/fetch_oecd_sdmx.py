@@ -17,6 +17,7 @@ BASE = 'https://sdmx.oecd.org/public/rest/data/'
 G20 = 'OECD.SDD.TPS,DSD_G20_PRICES@DF_G20_PRICES,1.0'
 CPI_ALL = 'OECD.SDD.TPS,DSD_PRICES@DF_PRICES_ALL,1.0'
 KEI = 'OECD.SDD.STES,DSD_KEI@DF_KEI,4.0'
+CLI = 'OECD.SDD.STES,DSD_STES@DF_CLI,'
 # (country, raw file name) -> (dataflow, key, description)
 SPECS = {
     ('japan', 'cpi'): (G20, 'JPN.M.N.CPI.IX._T.N._Z', 'CPI all items, index 2015=100, monthly'),
@@ -24,6 +25,14 @@ SPECS = {
     ('germany', 'cpi'): (CPI_ALL, 'DEU.M.N.CPI.IX._T.N._Z', 'CPI all items, index 2015=100, monthly'),
     ('japan', 'indpro'): (KEI, 'JPN.M.PRVM.IX.BTE.Y._Z', 'Production volume, industry excl. construction, SA, 2015=100, monthly'),
     ('germany', 'indpro'): (KEI, 'DEU.M.PRVM.IX.BTE.Y._Z', 'Production volume, industry excl. construction, SA, 2015=100, monthly'),
+    # CLI: composite leading indicator, index, amplitude adjusted, OECD harmonised methodology.
+    ('japan', 'oecd_leading_index'): (CLI, 'JPN.M.LI.IX._Z.AA.IX._Z.H', 'Composite leading indicator (CLI), amplitude adjusted, long-term average=100, monthly'),
+    ('germany', 'oecd_leading_index'): (CLI, 'DEU.M.LI.IX._Z.AA.IX._Z.H', 'Composite leading indicator (CLI), amplitude adjusted, long-term average=100, monthly'),
+}
+# The previous oecd_leading_index files were identical for Japan and Germany and held many
+# series per date (group-averaged). They are not a valid reference, so no continuity check.
+NO_CONTINUITY = {
+    'oecd_leading_index': 'replaces a contaminated file (identical for JP and DE, many series per date); old values are not a valid baseline',
 }
 MAX_LEVEL_DEVIATION = 0.015   # max |new/old - 1| on overlapping months
 MIN_GROWTH_CORR = 0.95        # month-over-month growth correlation on overlap
@@ -82,7 +91,10 @@ def refresh(raw_dir=None, specs=SPECS, fetcher=fetch_text):
         entry = dict(source='OECD SDMX API', url=f'{BASE}{flow}/{key}', description=desc,
                      fetched=date.today().isoformat(), first=new.index[0].date().isoformat(),
                      last=new.index[-1].date().isoformat(), rows=int(len(new)))
-        if path.exists():
+        if name in NO_CONTINUITY:
+            entry['continuity_vs_replaced_file'] = None
+            entry['replaced_file_note'] = NO_CONTINUITY[name]
+        elif path.exists():
             old = _legacy_monthly(path)
             monthly = len(old) < 2 or old.index.to_series().diff().median() < pd.Timedelta(days=40)
             if not monthly:

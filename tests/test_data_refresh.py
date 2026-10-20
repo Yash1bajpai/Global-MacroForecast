@@ -104,3 +104,33 @@ class RefreshIdempotenceTests(unittest.TestCase):
             f.refresh(d, spec, fetcher=lambda *a: payload)      # now compares against monthly file
             out = pd.read_csv(Path(d) / 'germany/indpro.csv')
             self.assertEqual(len(out), 120)
+
+
+class LeadingIndexTests(unittest.TestCase):
+    def test_leading_index_is_country_specific_and_skips_contaminated_baseline(self):
+        import tempfile, json
+        from pathlib import Path
+        from src.data import fetch_oecd_sdmx as f
+        jp, de = f.SPECS[('japan', 'oecd_leading_index')], f.SPECS[('germany', 'oecd_leading_index')]
+        self.assertTrue(jp[1].startswith('JPN.') and de[1].startswith('DEU.'))
+        self.assertEqual(jp[1].split('.', 1)[1], de[1].split('.', 1)[1])
+        self.assertIn('.LI.', jp[1])
+        self.assertIn('.AA.', jp[1])
+
+        def fake(flow, key):
+            base = 100.0 if key.startswith('JPN') else 90.0
+            rows = ''.join(f'{p},{base + i}\n' for i, p in enumerate(pd.period_range('2000-01', '2026-08', freq='M').astype(str)))
+            return 'TIME_PERIOD,OBS_VALUE\n' + rows
+
+        with tempfile.TemporaryDirectory() as d:
+            d = Path(d)
+            for c in ('japan', 'germany'):
+                (d / c).mkdir()
+                # contaminated legacy file: many values per date
+                (d / c / 'oecd_leading_index.csv').write_text('date,value\n2015-01-01,1\n2015-01-01,200\n', encoding='utf-8')
+            f.refresh(d, {k: v for k, v in f.SPECS.items() if k[1] == 'oecd_leading_index'}, fake)
+            a = pd.read_csv(d / 'japan' / 'oecd_leading_index.csv'); b = pd.read_csv(d / 'germany' / 'oecd_leading_index.csv')
+            self.assertFalse(a.date.duplicated().any())
+            self.assertFalse(a.equals(b))
+            src = json.loads((d / 'SOURCES.json').read_text(encoding='utf-8'))
+            self.assertIn('replaced_file_note', src['japan/oecd_leading_index'])
