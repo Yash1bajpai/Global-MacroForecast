@@ -59,7 +59,7 @@
                     <p class="stat-label">Economies</p>
                 </div>
                 <div class="stat-item">
-                    <h2 class="stat-value">40+</h2>
+                    <h2 class="stat-value">30+</h2>
                     <p class="stat-label">Features Used</p>
                 </div>
                 <div class="stat-item">
@@ -69,9 +69,14 @@
             </div>
         </header>
 
+        <!-- Experimental Status Notice -->
+        <div class="experiment-notice">
+            <strong>Experimental research project.</strong> These forecasts are produced by legacy models whose historical accuracy scores were measured with inputs that leaked future information, so those scores are not a valid quality benchmark and are no longer shown. A corrected evaluation pipeline now gates every new model behind simple baselines, and no candidate has passed yet. <a href="https://github.com/Yash1bajpai/Global-MacroForecast/tree/main/reports" target="_blank" rel="noopener">Methodology and evaluation reports on GitHub</a>.
+        </div>
+
         <!-- Cards Section -->
         <section class="forecast-section">
-            <h3 class="section-title">REAL-TIME PREDICTIONS</h3>
+            <h3 class="section-title">EXPERIMENTAL FORECASTS</h3>
             <h2 class="section-heading">Country Forecasts</h2>
             <p class="section-subtext">Click any country card to expand its 8-quarter GDP forecast with history and ensemble breakdowns.</p>
 
@@ -83,7 +88,6 @@
                             <span class="flag">US</span>
                             <h4>United States</h4>
                         </div>
-                        <span class="badge high-conf">High Confidence</span>
                     </div>
                     <div class="card-kpis">
                         <div class="kpi-box">
@@ -91,22 +95,8 @@
                             <h2 class="kpi-val" id="val-us">--</h2>
                             <p class="kpi-sub" id="trend-us">--</p>
                         </div>
-                        <div class="kpi-box">
-                            <p class="kpi-label">TEST RMSE</p>
-                            <h3 class="kpi-val-small" id="rmse-us">--</h3>
-                        </div>
-                        <div class="kpi-box">
-                            <p class="kpi-label">DIR ACCURACY</p>
-                            <h3 class="kpi-val-small">87.5%</h3>
-                        </div>
                     </div>
-                    <div class="ensemble-pill">Model Composition: LightGBM 51% | SARIMA 49%</div>
-                    <div class="driver-pills">
-                        <span class="driver-title">Key Drivers:</span>
-                        <span class="driver-tag">CPI Inflation ↓</span>
-                        <span class="driver-tag">M2 Supply ↑</span>
-                        <span class="driver-tag">Fed Rates</span>
-                    </div>
+                    <div class="ensemble-pill" id="comp-us">Model Composition: --</div>
                     <button class="expand-btn">VIEW UP TO 8-QTR FORECAST <span>▼</span></button>
                 </div>
 
@@ -117,7 +107,6 @@
                             <span class="flag">IN</span>
                             <h4>India</h4>
                         </div>
-                        <span class="badge med-conf">Medium Confidence</span>
                     </div>
                     <div class="card-kpis">
                         <div class="kpi-box">
@@ -125,33 +114,17 @@
                             <h2 class="kpi-val" id="val-india">--</h2>
                             <p class="kpi-sub" id="trend-india">--</p>
                         </div>
-                        <div class="kpi-box">
-                            <p class="kpi-label">TEST RMSE</p>
-                            <h3 class="kpi-val-small" id="rmse-india">--</h3>
-                        </div>
-                        <div class="kpi-box">
-                            <p class="kpi-label">DIR ACCURACY</p>
-                            <h3 class="kpi-val-small">84.2%</h3>
-                        </div>
                     </div>
-                    <div class="ensemble-pill">Model Composition: LightGBM 100% (Pure AI)</div>
-                    <div class="driver-pills">
-                        <span class="driver-title">Key Drivers:</span>
-                        <span class="driver-tag">CapEx Growth ↑</span>
-                        <span class="driver-tag">Agri Output ↑</span>
-                        <span class="driver-tag">Forex Reserves</span>
-                    </div>
+                    <div class="ensemble-pill" id="comp-india">Model Composition: --</div>
                     <button class="expand-btn">VIEW UP TO 8-QTR FORECAST <span>▼</span></button>
                 </div>
 
-                <!-- Australia (Wait, user has Germany and Japan) -->
                 <div class="country-card" data-country="germany" id="card-germany">
                     <div class="card-top">
                         <div class="card-title">
                             <span class="flag">DE</span>
                             <h4>Germany</h4>
                         </div>
-                        <span class="badge med-conf">Medium Confidence</span>
                     </div>
                     <div class="card-kpis">
                         <div class="kpi-box">
@@ -159,22 +132,8 @@
                             <h2 class="kpi-val" id="val-germany">--</h2>
                             <p class="kpi-sub" id="trend-germany">--</p>
                         </div>
-                        <div class="kpi-box">
-                            <p class="kpi-label">TEST RMSE</p>
-                            <h3 class="kpi-val-small" id="rmse-germany">--</h3>
-                        </div>
-                        <div class="kpi-box">
-                            <p class="kpi-label">DIR ACCURACY</p>
-                            <h3 class="kpi-val-small">70.8%</h3>
-                        </div>
                     </div>
-                    <div class="ensemble-pill">Model Composition: LightGBM 54% | SARIMA 46%</div>
-                    <div class="driver-pills">
-                        <span class="driver-title">Key Drivers:</span>
-                        <span class="driver-tag">Ind. Prod ↓</span>
-                        <span class="driver-tag">ECB Rates</span>
-                        <span class="driver-tag">Energy Index</span>
-                    </div>
+                    <div class="ensemble-pill" id="comp-germany">Model Composition: --</div>
                     <button class="expand-btn">VIEW UP TO 8-QTR FORECAST <span>▼</span></button>
                 </div>
 
@@ -185,7 +144,6 @@
                             <span class="flag">JP</span>
                             <h4>Japan</h4>
                         </div>
-                        <span class="badge high-conf">High Confidence</span>
                     </div>
                     <div class="card-kpis">
                         <div class="kpi-box">
@@ -193,22 +151,8 @@
                             <h2 class="kpi-val" id="val-japan">--</h2>
                             <p class="kpi-sub" id="trend-japan">--</p>
                         </div>
-                        <div class="kpi-box">
-                            <p class="kpi-label">TEST RMSE</p>
-                            <h3 class="kpi-val-small" id="rmse-japan">--</h3>
-                        </div>
-                        <div class="kpi-box">
-                            <p class="kpi-label">DIR ACCURACY</p>
-                            <h3 class="kpi-val-small">75.0%</h3>
-                        </div>
                     </div>
-                    <div class="ensemble-pill">Model Composition: LightGBM 56% | SARIMA 44%</div>
-                    <div class="driver-pills">
-                        <span class="driver-title">Key Drivers:</span>
-                        <span class="driver-tag">BoJ Yield Curve</span>
-                        <span class="driver-tag">Export Trade ↑</span>
-                        <span class="driver-tag">CPI Core</span>
-                    </div>
+                    <div class="ensemble-pill" id="comp-japan">Model Composition: --</div>
                     <button class="expand-btn">VIEW UP TO 8-QTR FORECAST <span>▼</span></button>
                 </div>
             </div>
@@ -231,29 +175,29 @@
 
         </section>
 
-        <!-- Accuracy Proof Section -->
+        <!-- Evaluation & Limitations Section -->
         <section class="accuracy-section">
-            <h3 class="section-title">MODEL VALIDATION</h3>
-            <h2 class="section-heading">Accuracy Proof</h2>
-            <p class="section-subtext">Rigorous evaluation metrics and data leakage prevention — because trustworthy forecasts demand transparent validation.</p>
+            <h3 class="section-title">HONEST EVALUATION</h3>
+            <h2 class="section-heading">Evaluation &amp; Limitations</h2>
+            <p class="section-subtext">What these forecasts are, how future models will be judged, and what the numbers can and cannot tell you.</p>
 
             <div class="accuracy-grid">
                 <div class="acc-card">
-                    <h4>How We Prevent Data Leakage</h4>
-                    <p class="acc-text">Every model is designed to ensure it cannot cheat — these metrics reflect real-world performance.</p>
+                    <h4>Why no accuracy scores are shown</h4>
+                    <p class="acc-text">The deployed models are legacy. Their old scores mixed different forecast horizons, used inputs that would not have been available at prediction time, and had blend weights chosen on the test period, so they flattered the models. They were removed rather than relabeled.</p>
                     <ul class="acc-list">
-                        <li><strong>Temporal Train/Test Split:</strong> Strict chronological splitting. Test data is always from a future period never seen during training.</li>
-                        <li><strong>No Future Feature Leakage:</strong> Lags and rolling stats are strictly past-dated.</li>
-                        <li><strong>Recursive Step-by-Step Forecast:</strong> The model predicts t+1, feeds it back as lag, and predicts t+2, simulating real deployment.</li>
+                        <li><strong>Current status:</strong> the same legacy models still serve the forecasts above, unchanged and labeled experimental.</li>
+                        <li><strong>Corrected evaluation:</strong> a leakage-safe rolling-origin pipeline now scores new candidates. None has beaten the simple baselines (training mean, last value, seasonal naive), so nothing new has been promoted.</li>
+                        <li><strong>Open question:</strong> the deployed models have not been re-scored under the corrected protocol, so their true skill is unknown in either direction.</li>
                     </ul>
                 </div>
                 <div class="acc-card">
-                    <h4>The Ensemble Approach</h4>
-                    <p class="acc-text">We utilize a dynamically weighted ensemble of two distinct architectures:</p>
+                    <h4>How future models are evaluated</h4>
+                    <p class="acc-text">Candidate models are evaluated so they cannot cheat, and none is promoted unless it beats every baseline:</p>
                     <ul class="acc-list">
-                        <li><strong>LightGBM (Tree-based):</strong> Captures complex non-linear relationships and interactions between macro indicators (e.g., Interest Rates x CPI). Hyperparameters optimized via Optuna.</li>
-                        <li><strong>SARIMA (Statistical):</strong> Captures the fundamental linear trend and seasonality of the GDP series.</li>
-                        <li><strong>Inverse RMSE Weighting:</strong> The final forecast dynamically favors the model with the lowest historical Root Mean Square Error.</li>
+                        <li><strong>Temporal Train/Test Split:</strong> strict chronological splitting. Test data is always from a future period never seen during training.</li>
+                        <li><strong>No Future Feature Leakage:</strong> lags and rolling stats are strictly past-dated.</li>
+                        <li><strong>Fail-Closed Promotion Gate:</strong> a candidate must beat the training-mean, last-value and seasonal baselines on validation and test before it can replace the legacy models.</li>
                     </ul>
                 </div>
             </div>
@@ -263,42 +207,28 @@
         <section class="sources-section">
             <h3 class="section-title">TRANSPARENT SOURCING</h3>
             <h2 class="section-heading">Data Sources</h2>
-            <p class="section-subtext">Every prediction is grounded in reference-grade macro data from government agencies.</p>
+            <p class="section-subtext">Every prediction is grounded in reference-grade macro data from public institutions.</p>
             
             <div class="sources-grid">
                 <div class="source-card">
                     <span class="flag">US</span>
                     <div>
                         <h4>FRED (Federal Reserve)</h4>
-                        <p>Reference grade API for USA macro indicators.</p>
+                        <p>US macro indicators, plus OECD and Eurostat series mirrored for India, Japan and Germany.</p>
                     </div>
                 </div>
                 <div class="source-card">
-                    <span class="flag">IN</span>
+                    <span class="flag">OECD</span>
                     <div>
-                        <h4>OECD & FRED</h4>
-                        <p>Quarterly national accounts & macro indicators.</p>
+                        <h4>OECD</h4>
+                        <p>Quarterly national accounts and leading indicators for Japan and Germany.</p>
                     </div>
                 </div>
                 <div class="source-card">
-                    <span class="flag">GL</span>
+                    <span class="flag">WB</span>
                     <div>
                         <h4>World Bank</h4>
                         <p>Annual GDP statistics and population data.</p>
-                    </div>
-                </div>
-                <div class="source-card">
-                    <span class="flag">DE</span>
-                    <div>
-                        <h4>Bundesbank</h4>
-                        <p>German specific economic indicators & sentiment.</p>
-                    </div>
-                </div>
-                <div class="source-card">
-                    <span class="flag">JP</span>
-                    <div>
-                        <h4>Bank of Japan</h4>
-                        <p>Japan macro statistics and rates.</p>
                     </div>
                 </div>
             </div>
