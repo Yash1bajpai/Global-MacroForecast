@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Global MacroForecast — an ensemble ML GDP Nowcasting engine forecasting Quarter-on-Quarter GDP growth for the US, Germany, Japan, and India up to 8 quarters ahead.">
-    <title>Global MacroForecast | GDP Predictions</title>
+    <meta name="description" content="Global MacroForecast: quarterly GDP growth history for the US, Germany, Japan and India. Forecasts are paused while the models are under repair.">
+    <title>Global MacroForecast | Forecasts paused</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -49,8 +49,7 @@
         <header class="hero-section">
             <h1 class="hero-title">Global MacroForecast</h1>
             <p class="hero-desc">
-                Up to 8-Quarter GDP Growth forecasts for 4 major economies, powered by an ensemble of <br>
-                Optuna-tuned LightGBM & SARIMA models trained on decades of macroeconomic indicators.
+                Quarterly GDP growth history for 4 major economies. Forecasts are paused while the models are under repair.
             </p>
             
             <div class="hero-stats">
@@ -59,26 +58,22 @@
                     <p class="stat-label">Economies</p>
                 </div>
                 <div class="stat-item">
-                    <h2 class="stat-value">30+</h2>
-                    <p class="stat-label">Features Used</p>
-                </div>
-                <div class="stat-item">
-                    <h2 class="stat-value">8Q</h2>
-                    <p class="stat-label">Max Forecast</p>
+                    <h2 class="stat-value">Paused</h2>
+                    <p class="stat-label">Forecasts</p>
                 </div>
             </div>
         </header>
 
-        <!-- Experimental Status Notice -->
-        <div class="experiment-notice">
-            <strong>Experimental research project.</strong> These forecasts are produced by legacy models whose historical accuracy scores were measured with inputs that leaked future information, so those scores are not a valid quality benchmark and are no longer shown. A corrected evaluation pipeline now gates every new model behind simple baselines, and no candidate has passed yet. <a href="https://github.com/Yash1bajpai/Global-MacroForecast/tree/main/reports" target="_blank" rel="noopener">Methodology and evaluation reports on GitHub</a>.
+        <!-- Forecast Paused Notice -->
+        <div class="experiment-notice" id="forecast-paused-notice">
+            <strong>Forecasts are paused while the models are under repair.</strong> The previous forecasts came from legacy models whose accuracy was never validly measured: their old scores used information that would not have been available at the time, so those scores were removed. Input data has since been corrected and refreshed, and a corrected evaluation now checks any new model against simple baselines. No tested model has shown enough evidence to replace the legacy ones, so no forecast, range or accuracy figure is shown. Historical GDP growth below is unchanged. <a href="https://github.com/Yash1bajpai/Global-MacroForecast/tree/main/reports" target="_blank" rel="noopener">Methodology and evaluation reports on GitHub</a>.
         </div>
 
         <!-- Cards Section -->
         <section class="forecast-section">
-            <h3 class="section-title">EXPERIMENTAL FORECASTS</h3>
-            <h2 class="section-heading">Country Forecasts</h2>
-            <p class="section-subtext">Click any country card to expand its 8-quarter GDP forecast with history and ensemble breakdowns.</p>
+            <h3 class="section-title">FORECASTS PAUSED</h3>
+            <h2 class="section-heading">GDP Growth History</h2>
+            <p class="section-subtext">Click a country to see its recent quarter-on-quarter GDP growth. No forecast is shown.</p>
 
             <div class="cards-grid">
                 <!-- US Card -->
@@ -91,13 +86,13 @@
                     </div>
                     <div class="card-kpis">
                         <div class="kpi-box">
-                            <p class="kpi-label">NEXT QTR FORECAST</p>
+                            <p class="kpi-label">LATEST REPORTED QUARTER</p>
                             <h2 class="kpi-val" id="val-us">--</h2>
                             <p class="kpi-sub" id="trend-us">--</p>
                         </div>
                     </div>
-                    <div class="ensemble-pill" id="comp-us">Model Composition: --</div>
-                    <button class="expand-btn">VIEW UP TO 8-QTR FORECAST <span>▼</span></button>
+                    <div class="ensemble-pill" id="comp-us">No validated forecast</div>
+                    <button class="expand-btn">VIEW RECENT HISTORY <span>▼</span></button>
                 </div>
 
                 <!-- India Card -->
@@ -110,13 +105,13 @@
                     </div>
                     <div class="card-kpis">
                         <div class="kpi-box">
-                            <p class="kpi-label">NEXT QTR FORECAST</p>
+                            <p class="kpi-label">LATEST REPORTED QUARTER</p>
                             <h2 class="kpi-val" id="val-india">--</h2>
                             <p class="kpi-sub" id="trend-india">--</p>
                         </div>
                     </div>
-                    <div class="ensemble-pill" id="comp-india">Model Composition: --</div>
-                    <button class="expand-btn">VIEW UP TO 8-QTR FORECAST <span>▼</span></button>
+                    <div class="ensemble-pill" id="comp-india">No validated forecast</div>
+                    <button class="expand-btn">VIEW RECENT HISTORY <span>▼</span></button>
                 </div>
 
                 <div class="country-card" data-country="germany" id="card-germany">
@@ -128,13 +123,13 @@
                     </div>
                     <div class="card-kpis">
                         <div class="kpi-box">
-                            <p class="kpi-label">NEXT QTR FORECAST</p>
+                            <p class="kpi-label">LATEST REPORTED QUARTER</p>
                             <h2 class="kpi-val" id="val-germany">--</h2>
                             <p class="kpi-sub" id="trend-germany">--</p>
                         </div>
                     </div>
-                    <div class="ensemble-pill" id="comp-germany">Model Composition: --</div>
-                    <button class="expand-btn">VIEW UP TO 8-QTR FORECAST <span>▼</span></button>
+                    <div class="ensemble-pill" id="comp-germany">No validated forecast</div>
+                    <button class="expand-btn">VIEW RECENT HISTORY <span>▼</span></button>
                 </div>
 
                 <!-- Japan Card -->
@@ -147,13 +142,13 @@
                     </div>
                     <div class="card-kpis">
                         <div class="kpi-box">
-                            <p class="kpi-label">NEXT QTR FORECAST</p>
+                            <p class="kpi-label">LATEST REPORTED QUARTER</p>
                             <h2 class="kpi-val" id="val-japan">--</h2>
                             <p class="kpi-sub" id="trend-japan">--</p>
                         </div>
                     </div>
-                    <div class="ensemble-pill" id="comp-japan">Model Composition: --</div>
-                    <button class="expand-btn">VIEW UP TO 8-QTR FORECAST <span>▼</span></button>
+                    <div class="ensemble-pill" id="comp-japan">No validated forecast</div>
+                    <button class="expand-btn">VIEW RECENT HISTORY <span>▼</span></button>
                 </div>
             </div>
 
@@ -161,10 +156,10 @@
             <div id="chart-wrapper" class="chart-wrapper hidden">
                 <div class="chart-panel">
                     <div class="chart-header">
-                        <h3 id="chart-title">United States - 8-Quarter Forecast</h3>
+                        <h3 id="chart-title">United States - Recent GDP growth</h3>
                         <div class="chart-legend-custom">
-                            <span class="legend-item"><span class="box history-box"></span> History</span>
-                            <span class="legend-item"><span class="box forecast-box"></span> Ensemble Forecast</span>
+                            <span class="legend-item"><span class="box history-box"></span> Quarter-on-quarter GDP growth (reported)</span>
+                            
                         </div>
                     </div>
                     <div class="canvas-container">
@@ -179,16 +174,16 @@
         <section class="accuracy-section">
             <h3 class="section-title">HONEST EVALUATION</h3>
             <h2 class="section-heading">Evaluation &amp; Limitations</h2>
-            <p class="section-subtext">What these forecasts are, how future models will be judged, and what the numbers can and cannot tell you.</p>
+            <p class="section-subtext">Why forecasts are paused, how future models will be judged, and what the numbers can and cannot tell you.</p>
 
             <div class="accuracy-grid">
                 <div class="acc-card">
                     <h4>Why no accuracy scores are shown</h4>
                     <p class="acc-text">The deployed models are legacy. Their old scores mixed different forecast horizons, used inputs that would not have been available at prediction time, and had blend weights chosen on the test period, so they flattered the models. They were removed rather than relabeled.</p>
                     <ul class="acc-list">
-                        <li><strong>Current status:</strong> the same legacy models still serve the forecasts above, unchanged and labeled experimental.</li>
-                        <li><strong>Corrected evaluation:</strong> a leakage-safe rolling-origin pipeline now scores new candidates. None has beaten the simple baselines (training mean, last value, seasonal naive), so nothing new has been promoted.</li>
-                        <li><strong>Open question:</strong> the deployed models have not been re-scored under the corrected protocol, so their true skill is unknown in either direction.</li>
+                        <li><strong>Current status:</strong> the legacy forecasts have been withdrawn from this page and the public API until a model passes the corrected evaluation.</li>
+                        <li><strong>Corrected evaluation:</strong> a leakage-safe rolling-origin pipeline now scores new candidates. None of the candidates tested so far has beaten the simple baselines by the pre-set rule on this data, so nothing new has been promoted. That says these candidates did not show skill under this test, not that GDP cannot be forecast.</li>
+                        <li><strong>Data caveat:</strong> series are revised values, not what was known at the time, so any future score will be somewhat optimistic.</li>
                     </ul>
                 </div>
                 <div class="acc-card">
@@ -214,14 +209,14 @@
                     <span class="flag">US</span>
                     <div>
                         <h4>FRED (Federal Reserve)</h4>
-                        <p>US macro indicators, plus OECD and Eurostat series mirrored for India, Japan and Germany.</p>
+                        <p>US macro indicators and other FRED series.</p>
                     </div>
                 </div>
                 <div class="source-card">
                     <span class="flag">OECD</span>
                     <div>
                         <h4>OECD</h4>
-                        <p>Quarterly national accounts and leading indicators for Japan and Germany.</p>
+                        <p>Consumer prices, industrial production and composite leading indicators for Japan, Germany and India (official OECD SDMX API).</p>
                     </div>
                 </div>
                 <div class="source-card">
@@ -243,7 +238,7 @@
         <div class="footer-content">
             <div class="footer-left">
                 <h3>Global MacroForecast</h3>
-                <p>GDP Nowcasting Ensemble Architecture</p>
+                <p>Quarterly GDP growth history</p>
                 <p class="copyright">© 2026 Yash Bajpai. All rights reserved.</p>
             </div>
             <div class="footer-right">

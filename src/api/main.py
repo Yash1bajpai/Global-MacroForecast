@@ -152,68 +152,31 @@ def get_history(country: CountryCode) -> Dict[str, float]:
     return {date.strftime("%Y-%m-%d"): float(val) for date, val in recent.items()}
 
 
-@app.get("/api/metrics/{country}", response_model=MetricsResponse)
-def get_metrics(country: CountryCode) -> Dict[str, float]:
-    c = country.value
-    metrics = DATA_CACHE.get("metrics", {})
-    if c not in metrics:
-        raise HTTPException(status_code=404, detail="Metrics not found")
-    return metrics[c]
+FORECASTS_PAUSED_DETAIL = (
+    "Forecasts are paused while the models are under repair. The legacy forecasts and "
+    "their accuracy figures were not validly measured and have been withdrawn. "
+    "Reported history is still available at /api/history/{country}."
+)
 
 
-@app.get("/api/forecast/{country}", response_model=List[ForecastPoint])
-def get_forecast(country: CountryCode) -> List[Dict[str, Optional[float]]]:
-    c = country.value
-    if f"{c}_lgbm" not in MODEL_CACHE:
-        raise HTTPException(status_code=404, detail="Model not found")
-
-    weights = DATA_CACHE["weights"].get(c, {"sarima": 0.0, "lgbm": 1.0})
-
-    lgbm_model = MODEL_CACHE[f"{c}_lgbm"]
-    X = DATA_CACHE[f"{c}_X"]
-    y = DATA_CACHE[f"{c}_y"]
-    lgbm_fc = lgbm_forecast_recursive(c, 8, fitted=lgbm_model, X=X, y=y)
-
-    sarima_fc = None
-    conf_int = None
-    if f"{c}_sarima" in MODEL_CACHE:
-        sarima_model = MODEL_CACHE[f"{c}_sarima"]
-        series = DATA_CACHE[f"{c}_series"]
-        sarima_fc, conf_int = sarima_forecast(c, series, 8, fitted_orig=sarima_model)
-
-    if sarima_fc is not None:
-        ensemble = weights["sarima"] * sarima_fc + weights["lgbm"] * lgbm_fc
-    else:
-        ensemble = lgbm_fc
-
-    response: List[Dict[str, Optional[float]]] = []
-    for date, ens_val in ensemble.items():
-        point: Dict[str, Optional[float]] = {
-            "date": date.strftime("%Y-%m-%d"),
-            "quarter": f"Q{date.quarter}-{date.year}",
-            "ensemble_pred": float(ens_val),
-            "lgbm_pred": float(lgbm_fc[date])
-        }
-        if sarima_fc is not None:
-            point["sarima_pred"] = float(sarima_fc[date])
-            if conf_int is not None:
-                point["ci_low"] = float(conf_int.loc[date, "lower_95"])
-                point["ci_high"] = float(conf_int.loc[date, "upper_95"])
-        response.append(point)
-
-    return response
+def _forecasts_paused() -> None:
+    raise HTTPException(status_code=503, detail=FORECASTS_PAUSED_DETAIL,
+                        headers={"Retry-After": "86400"})
 
 
-@app.get("/api/dashboard/{country}", response_model=DashboardResponse)
-def get_dashboard_data(country: CountryCode) -> Dict[str, object]:
-    hist = get_history(country)
-    met = get_metrics(country)
-    fc = get_forecast(country)
-    return {
-        "history": hist,
-        "metrics": met,
-        "forecast": fc
-    }
+@app.get("/api/metrics/{country}")
+def get_metrics(country: CountryCode):
+    _forecasts_paused()
+
+
+@app.get("/api/forecast/{country}")
+def get_forecast(country: CountryCode):
+    _forecasts_paused()
+
+
+@app.get("/api/dashboard/{country}")
+def get_dashboard_data(country: CountryCode):
+    _forecasts_paused()
 
 
 # --- Serve Static Frontend ---

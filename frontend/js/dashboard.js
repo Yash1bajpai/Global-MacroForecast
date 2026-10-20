@@ -1,8 +1,3 @@
-// Configurable Backend API URL (Option 1 Deployment)
-const API_BASE_URL = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" 
-    ? "http://127.0.0.1:8000" 
-    : "https://macroforecast-api-preview.vercel.app";
-
 // Static Data URL for Vercel Deployment Fallback
 const STATIC_DATA_URL = "data/forecasts.json";
 
@@ -30,26 +25,6 @@ function clearElement(el) {
     }
 }
 
-function setTrend(el, annRate, nextQtr, isAnnual = false) {
-    clearElement(el);
-    const prefix = isAnnual ? "Annual ~" : "Annualized ~";
-    const baseText = document.createTextNode(prefix + annRate.toFixed(1) + "% ");
-    el.appendChild(baseText);
-
-    const span = document.createElement("span");
-    if (nextQtr > 0.2) {
-        span.className = "trend-up";
-        span.textContent = "▲ Expansion";
-    } else if (nextQtr < 0) {
-        span.className = "trend-down";
-        span.textContent = "▼ Contraction";
-    } else {
-        span.className = "trend-flat";
-        span.textContent = "▶ Stagnation";
-    }
-    el.appendChild(span);
-}
-
 // --- EVENT LISTENERS ---
 cards.forEach(card => {
     card.addEventListener("click", (e) => {
@@ -75,255 +50,98 @@ function collapseAll() {
     chartWrapper.classList.add("hidden");
 }
 
-// --- DATA FETCHING (Resilient: instant static snapshot + live API upgrade) ---
-// Render strategy: paint cards from the bundled static JSON immediately
-// (~300ms), then upgrade to the live Render API in the background. A cold or
-// sleeping backend can never leave the dashboard blank -- visitors see the
-// static snapshot until the API answers.
+// --- DATA (history only) ---
+// Forecasts are paused while the models are under repair. This page reads only
+// the bundled reported-history snapshot and never calls a forecast endpoint.
 const COUNTRIES = ["us", "germany", "japan", "india"];
-const API_TIMEOUT_MS = 4000; // per-request budget for the live API
 
 let cachedStaticData = null;
-let cachedApiData = {};
 
 const apiStatusText = document.getElementById("api-status-text");
 const apiStatusBadge = apiStatusText ? apiStatusText.parentElement : null;
 
-function setApiStatus(state) {
-    if (!apiStatusText) return;
-    if (state === "live") {
-        apiStatusText.textContent = "Live API Active";
-        if (apiStatusBadge) {
-            apiStatusBadge.classList.add("api-live");
-            apiStatusBadge.classList.remove("api-fallback");
-        }
-    } else if (state === "fallback") {
-        apiStatusText.textContent = "Static Snapshot (Live API Unavailable)";
-        if (apiStatusBadge) {
-            apiStatusBadge.classList.add("api-fallback");
-            apiStatusBadge.classList.remove("api-live");
-        }
-    }
+function hasHistory(data) {
+    return !!(data && typeof data === "object" && data.history &&
+        Object.keys(data.history).length > 0 &&
+        Object.values(data.history).every((v) => typeof v === "number"));
 }
 
-function hasDashboardShape(data) {
-    return (
-        data && typeof data === "object" &&
-        Array.isArray(data.forecast) && data.forecast.length > 0 &&
-        typeof data.forecast[0]?.ensemble_pred === "number" &&
-        data.history && Object.keys(data.history).length > 0 &&
-        data.metrics && typeof data.metrics.w_lgbm === "number" &&
-        typeof data.metrics.w_sarima === "number"
-    );
+function quarterLabel(isoDate) {
+    const d = new Date(isoDate + "T00:00:00Z");
+    return "Q" + (Math.floor(d.getUTCMonth() / 3) + 1) + " " + d.getUTCFullYear();
 }
 
 async function fetchStaticData() {
     if (cachedStaticData) return cachedStaticData;
     const res = await fetch(STATIC_DATA_URL);
-    if (!res.ok) throw new Error(`Static forecasts.json failed (HTTP ${res.status})`);
+    if (!res.ok) throw new Error(`History snapshot failed (HTTP ${res.status})`);
     cachedStaticData = await res.json();
     return cachedStaticData;
 }
 
-async function fetchApiData(country) {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
-    try {
-        const res = await fetch(`${API_BASE_URL}/api/dashboard/${country}`, { signal: controller.signal });
-        if (!res.ok) throw new Error(`API status ${res.status}`);
-        const data = await res.json();
-        if (!hasDashboardShape(data)) throw new Error("Malformed API payload");
-        return data;
-    } finally {
-        clearTimeout(timeoutId);
-    }
-}
-
 function renderCard(country, data) {
-    if (!hasDashboardShape(data)) {
-        console.error(`Invalid dashboard payload for ${country}; keeping placeholder.`);
-        return;
-    }
+    if (!hasHistory(data)) return;
     const valEl = document.getElementById("val-" + country);
     const trendEl = document.getElementById("trend-" + country);
     if (!valEl || !trendEl) return;
-
-    const nextQtr = data.forecast[0].ensemble_pred;
-    valEl.textContent = (nextQtr > 0 ? "+" : "") + nextQtr.toFixed(2) + "%";
-
-    const r = nextQtr / 100.0;
-    const annRate = (Math.pow(1 + r, 4) - 1) * 100.0;
-    setTrend(trendEl, annRate, nextQtr, false);
-
-    const compEl = document.getElementById("comp-" + country);
-    if (compEl) {
-        // Round one side and derive the other so the pair always sums to 100.
-        const lgbmPct = Math.round(data.metrics.w_lgbm * 100);
-        compEl.textContent = `Model Composition: LightGBM ${lgbmPct}% | SARIMA ${100 - lgbmPct}%`;
-    }
+    const dates = Object.keys(data.history);
+    const last = data.history[dates[dates.length - 1]];
+    valEl.textContent = (last > 0 ? "+" : "") + last.toFixed(2) + "%";
+    trendEl.textContent = "Reported QoQ growth, " + quarterLabel(dates[dates.length - 1]);
 }
 
-// Best available data without waiting on the network.
-function getRenderData(country) {
-    if (cachedApiData[country]) return cachedApiData[country];
-    if (cachedStaticData && cachedStaticData[country]) return cachedStaticData[country];
-    return null;
-}
-
-// --- INITIAL LOAD ---
 async function initializeCards() {
-    // 1. Instant paint from the static snapshot (one shared fetch).
-    // Badge stays "Connecting…" here: the live probe in runLiveUpgrade
-    // decides between live/fallback, so a warm backend doesn't flash amber.
+    if (apiStatusText) apiStatusText.textContent = "Forecasts paused (under repair)";
+    if (apiStatusBadge) apiStatusBadge.classList.add("api-fallback");
     try {
-        const staticAll = await fetchStaticData();
-        for (const c of COUNTRIES) {
-            try {
-                renderCard(c, staticAll[c]);
-            } catch (err) {
-                console.error(`Static render failed for ${c}; keeping placeholder.`, err);
-            }
-        }
+        const all = await fetchStaticData();
+        for (const c of COUNTRIES) renderCard(c, all[c]);
     } catch (err) {
-        console.error("Static snapshot unavailable; waiting for live API.", err);
+        console.error("History snapshot unavailable.", err);
     }
-
-    // 2. Background upgrade from the live API (parallel, bounded retries).
-    runLiveUpgrade();
-}
-
-let upgradeRounds = 0;
-function runLiveUpgrade() {
-    upgradeRounds += 1;
-    const pending = COUNTRIES.filter((c) => !cachedApiData[c]);
-    if (pending.length === 0) return;
-
-    const attempts = pending.map((c) =>
-        fetchApiData(c)
-            .then((data) => {
-                cachedApiData[c] = data;
-                renderCard(c, data);
-                setApiStatus("live");
-                if (currentCountry === c) drawChart(data);
-            })
-            .catch((err) => {
-                console.warn(`Live API unavailable for ${c} (${err.message}); keeping static values.`);
-                setApiStatus("fallback");
-            })
-    );
-
-    Promise.all(attempts).then(() => {
-        const stillPending = COUNTRIES.some((c) => !cachedApiData[c]);
-        // Render free-tier cold-starts can take ~60-90s: retry a few times.
-        if (stillPending && upgradeRounds < 6) {
-            setTimeout(runLiveUpgrade, 45000);
-        }
-    });
 }
 
 // --- EXPAND CARD LOGIC ---
 function expandCard(country) {
     chartWrapper.classList.remove("hidden");
     chartWrapper.classList.add("visible");
-    chartTitle.textContent = COUNTRY_TITLES[country] + " - 8-Quarter Forecast";
-
-    const ready = getRenderData(country);
-    if (ready) {
-        drawChart(ready);
-        return;
-    }
-
-    // Page just loaded and nothing is cached yet: prefer whichever source
-    // is fastest. The static snapshot usually wins (it is local and tiny);
-    // the live API remains the background upgrade path.
-    (async () => {
-        let data = null;
-        try {
-            const all = await fetchStaticData();
-            data = all[country];
-        } catch (staticErr) {
-            console.warn(`Static snapshot unavailable for ${country} (${staticErr.message}); trying live API.`);
-        }
-        if (!hasDashboardShape(data)) {
-            try {
-                data = await fetchApiData(country);
-                cachedApiData[country] = data;
-                setApiStatus("live");
-            } catch (apiErr) {
-                console.error(`No data available for ${country}.`, apiErr);
-                return;
-            }
-        }
-        if (currentCountry !== country) return; // user moved on/collapsed meanwhile
-        if (!hasDashboardShape(data)) {
-            console.error(`No valid data available for ${country}.`);
-            return;
-        }
-        renderCard(country, data);
-        drawChart(data);
-    })();
+    chartTitle.textContent = COUNTRY_TITLES[country] + " - Recent GDP growth (reported)";
+    fetchStaticData().then((all) => {
+        if (currentCountry !== country || !hasHistory(all[country])) return;
+        drawChart(all[country]);
+    }).catch((err) => console.error(`No history for ${country}.`, err));
 }
 
-// --- CHART.JS ---
+// --- CHART.JS (history only) ---
 function drawChart(data) {
-    if (!hasDashboardShape(data)) {
-        console.error("drawChart: invalid dashboard payload, refusing to render.");
-        return;
-    }
+    if (!hasHistory(data)) return;
     const ctx = document.getElementById("gdpChart").getContext("2d");
-
     const histDates = Object.keys(data.history);
     const histValues = Object.values(data.history);
-
-    const fcDates = data.forecast.map(d => d.date);
-    const fcValues = data.forecast.map(d => d.ensemble_pred);
-
-    const allLabels = [...histDates, ...fcDates];
-    const historyData = [...histValues, ...Array(fcDates.length).fill(null)];
-
-    const lastHistValue = histValues[histValues.length - 1];
-    const forecastData = [...Array(histDates.length - 1).fill(null), lastHistValue, ...fcValues];
-
-    if (chartInstance) {
-        chartInstance.destroy();
-    }
+    if (chartInstance) chartInstance.destroy();
 
     const isLight = document.documentElement.getAttribute("data-theme") === "light";
     const tickColor = isLight ? "#475569" : "#94A3B8";
     const gridColor = isLight ? "rgba(0, 0, 0, 0.06)" : "rgba(255, 255, 255, 0.06)";
     const tooltipBg = isLight ? "rgba(255, 255, 255, 0.98)" : "rgba(30, 41, 59, 0.98)";
     const tooltipTitle = isLight ? "#0F172A" : "#F8FAFC";
-    const tooltipBody = isLight ? "#059669" : "#34D399";
 
     chartInstance = new Chart(ctx, {
         type: "line",
         data: {
-            labels: allLabels,
-            datasets: [
-                {
-                    label: "Historical GDP",
-                    data: historyData,
-                    borderColor: isLight ? "#2563EB" : "#60A5FA",
-                    backgroundColor: isLight ? "rgba(37, 99, 235, 0.1)" : "rgba(96, 165, 250, 0.15)",
-                    borderWidth: 2.5,
-                    pointBackgroundColor: isLight ? "#FFFFFF" : "#1E293B",
-                    pointBorderColor: isLight ? "#2563EB" : "#60A5FA",
-                    pointRadius: 4,
-                    fill: true,
-                    tension: 0.4
-                },
-                {
-                    label: "Forecast",
-                    data: forecastData,
-                    borderColor: isLight ? "#059669" : "#34D399",
-                    borderWidth: 2.5,
-                    borderDash: [5, 5],
-                    pointBackgroundColor: isLight ? "#059669" : "#34D399",
-                    pointRadius: 5,
-                    fill: false,
-                    tension: 0.4
-                }
-            ]
+            labels: histDates.map(quarterLabel),
+            datasets: [{
+                label: "Reported QoQ GDP growth",
+                data: histValues,
+                borderColor: isLight ? "#2563EB" : "#60A5FA",
+                backgroundColor: isLight ? "rgba(37, 99, 235, 0.1)" : "rgba(96, 165, 250, 0.15)",
+                borderWidth: 2.5,
+                pointBackgroundColor: isLight ? "#FFFFFF" : "#1E293B",
+                pointBorderColor: isLight ? "#2563EB" : "#60A5FA",
+                pointRadius: 4,
+                fill: true,
+                tension: 0.4
+            }]
         },
         options: {
             responsive: true,
@@ -331,32 +149,16 @@ function drawChart(data) {
             plugins: {
                 legend: { display: false },
                 tooltip: {
-                    mode: "index",
-                    intersect: false,
-                    backgroundColor: tooltipBg,
-                    titleColor: tooltipTitle,
-                    bodyColor: tooltipBody,
-                    borderColor: isLight ? "rgba(108, 92, 231, 0.25)" : "rgba(157, 141, 241, 0.4)",
-                    borderWidth: 1,
-                    padding: 12
+                    mode: "index", intersect: false,
+                    backgroundColor: tooltipBg, titleColor: tooltipTitle,
+                    bodyColor: isLight ? "#1D4ED8" : "#93C5FD",
+                    borderWidth: 1, padding: 12,
+                    callbacks: { label: (c) => c.parsed.y.toFixed(2) + "%" }
                 }
             },
             scales: {
-                x: {
-                    grid: { color: gridColor, drawBorder: false },
-                    ticks: { color: tickColor, maxTicksLimit: 12 }
-                },
-                y: {
-                    grid: {
-                        color: (context) => context.tick.value === 0 ? (isLight ? "rgba(13, 148, 136, 0.4)" : "rgba(28, 254, 186, 0.4)") : gridColor,
-                        lineWidth: (context) => context.tick.value === 0 ? 2 : 1,
-                        drawBorder: false
-                    },
-                    ticks: {
-                        color: tickColor,
-                        callback: function(value) { return value + "%"; }
-                    }
-                }
+                x: { grid: { color: gridColor }, ticks: { color: tickColor, maxTicksLimit: 12 } },
+                y: { grid: { color: gridColor }, ticks: { color: tickColor, callback: (v) => v + "%" } }
             },
             interaction: { mode: "nearest", axis: "x", intersect: false }
         }
