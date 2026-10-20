@@ -55,3 +55,52 @@ class RefreshTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class WiringTests(unittest.TestCase):
+    root = __import__('pathlib').Path(__file__).resolve().parents[1]
+
+    def test_frozen_fred_ids_are_not_fetched(self):
+        text = (self.root / 'config/settings.py').read_text()
+        for frozen in ('JPNCPIALLMINMEI', 'JPNPROINDMISMEI', 'DEUPROINDQISMEI', 'INDCPIALLMINMEI', 'DEUCPIALLMINMEI'):
+            self.assertNotIn(f'"{frozen}"', text)
+
+    def test_monthly_workflow_is_fail_closed_and_refreshes_before_preprocess(self):
+        wf = (self.root / '.github/workflows/auto_update.yml').read_text()
+        self.assertLess(wf.index('src.data.fetch_oecd_sdmx'), wf.index('preprocess.py'))
+        self.assertLess(wf.index('preprocess.py'), wf.index('src.data.freshness'))
+        self.assertLess(wf.index('src.data.freshness'), wf.index('train_candidate'))
+        self.assertIn('contents: read', wf)
+        code = '\n'.join(l for l in wf.lower().splitlines() if not l.strip().startswith('#'))
+        for forbidden in ('git push', 'contents: write', 'vercel', 'render', 'deploy'):
+            self.assertNotIn(forbidden, code)
+
+    def test_availability_reports_gaps_and_origin_share(self):
+        from src.data.freshness import availability_report
+        idx = pd.date_range('2010-01-01', periods=20, freq='QS')
+        m = pd.DataFrame({'gdp_growth': 1.0, 'cpi_level': 100.0}, index=idx)
+        m.loc[idx[5], 'cpi_level'] = np.nan
+        r = availability_report(m)['cpi_level']
+        self.assertEqual(r['missing_quarters'], ['2011-Q2'])
+        self.assertAlmostEqual(r['origin_availability'], 17 / 20)  # t-2 missing at the first two origins and at index 7
+
+
+class RefreshIdempotenceTests(unittest.TestCase):
+    def test_refresh_twice_and_against_quarterly_legacy(self):
+        import tempfile
+        from pathlib import Path
+        from src.data import fetch_oecd_sdmx as f
+        idx = pd.period_range('2000-01', periods=120, freq='M')
+        vals = 100 + np.cumsum(np.sin(np.arange(120)))
+        payload = 'TIME_PERIOD,OBS_VALUE\n' + '\n'.join(f'{p},{v}' for p, v in zip(idx.astype(str), vals))
+        spec = {('germany', 'indpro'): ('flow', 'key', 'test')}
+        with tempfile.TemporaryDirectory() as d:
+            (Path(d) / 'germany').mkdir()
+            # quarterly legacy file (means of complete quarters)
+            s = pd.Series(vals, index=idx.to_timestamp())
+            q = s.resample('QS').mean()
+            q.rename('value').rename_axis('date').reset_index().to_csv(Path(d) / 'germany/indpro.csv', index=False)
+            f.refresh(d, spec, fetcher=lambda *a: payload)      # replaces quarterly legacy file
+            f.refresh(d, spec, fetcher=lambda *a: payload)      # now compares against monthly file
+            out = pd.read_csv(Path(d) / 'germany/indpro.csv')
+            self.assertEqual(len(out), 120)

@@ -84,8 +84,9 @@ def refresh(raw_dir=None, specs=SPECS, fetcher=fetch_text):
                      last=new.index[-1].date().isoformat(), rows=int(len(new)))
         if path.exists():
             old = _legacy_monthly(path)
-            if country == 'germany' and name == 'indpro':
-                # legacy file is a quarterly series; compare on quarterly means of complete quarters
+            monthly = len(old) < 2 or old.index.to_series().diff().median() < pd.Timedelta(days=40)
+            if not monthly:
+                # a quarterly file (the original FRED Germany IP): compare on means of complete quarters
                 counts = new.resample('QS').count()
                 qm = new.resample('QS').mean()[counts == 3]
                 rep = continuity_report(qm, old)

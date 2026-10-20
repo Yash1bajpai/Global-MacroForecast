@@ -37,11 +37,12 @@ FRED_SERIES = {
 }
 FRED_SERIES_US = FRED_SERIES  # backward-compat alias
 
+# NOTE: CPI (JP, IN, DE) and industrial production (JP, DE) are NOT fetched from FRED:
+# their OECD mirrors froze (2021-2025). They come from src/data/fetch_oecd_sdmx.py.
+
 # -- FRED Series: Japan (OECD series mirrored on FRED)
 FRED_SERIES_JAPAN = {
     "gdp":           "NAEXKP01JPQ657S",  # Real GDP vol index, quarterly SA
-    "cpi":           "JPNCPIALLMINMEI",  # CPI all items, monthly
-    "indpro":        "JPNPROINDMISMEI",  # Industrial production, monthly
     "unrate":        "LRUNTTTTJPM156S",   # Unemployment rate, monthly (OECD)
     "interest_rate": "IRSTCI01JPM156N",  # Short-term interest rate, monthly
 }
@@ -49,8 +50,6 @@ FRED_SERIES_JAPAN = {
 # -- FRED Series: Germany (Eurostat/OECD series on FRED)
 FRED_SERIES_GERMANY = {
     "gdp":           "CLVMNACSCAB1GQDE",   # Real GDP, quarterly SA
-    "cpi":           "DEUCPIALLMINMEI",    # CPI all items, monthly
-    "indpro":        "DEUPROINDQISMEI",    # Industrial production, quarterly (OECD)
     "unrate":        "LRHUTTTTDEM156S",    # Unemployment rate, monthly
     "interest_rate": "IRSTCI01DEM156N",    # Short-term interest rate, monthly
     "brent_crude":   "MCOILBRENTEU",       # Brent Crude Oil Prices (proxy for Energy Crisis), monthly
@@ -60,7 +59,6 @@ FRED_SERIES_GERMANY = {
 # -- FRED Series: India (OECD QNA mirrored on FRED)
 FRED_SERIES_INDIA = {
     "gdp":    "NAEXKP01INQ657S",  # Real GDP, QoQ SA growth (OECD), quarterly
-    "cpi":    "INDCPIALLMINMEI",  # CPI all items, monthly
     "unrate": "LRUNTTTTINQ156S",  # Unemployment rate, quarterly
 }
 

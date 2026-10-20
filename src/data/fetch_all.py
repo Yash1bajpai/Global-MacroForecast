@@ -72,8 +72,11 @@ if __name__ == "__main__":
             logger.info("  -- FRED: %s", country.upper())
             fetch_country(fred, country, series)
 
+    from src.data.fetch_oecd_sdmx import refresh as refresh_oecd_sdmx
+
     results = {
         "FRED (US + Japan + Germany + India)": run_step("FRED", run_fred),
+        "OECD SDMX (JP/IN/DE CPI, JP/DE industrial production)": run_step("OECD SDMX", refresh_oecd_sdmx),
         "World Bank (all 4 countries)":        run_step("World Bank", fetch_worldbank),
         "OECD (Japan + Germany quarterly)":    run_step("OECD", fetch_oecd),
     }
