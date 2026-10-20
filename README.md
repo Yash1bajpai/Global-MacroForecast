@@ -6,13 +6,32 @@ The code is MIT licensed. Third-party data remains subject to provider terms.
 
 Dashboard: https://global-macro-forecast.vercel.app/
 
-## Status: no demonstrated forecast skill
+## Status: forecasts paused, no demonstrated forecast skill
 
-The legacy dashboard snapshot and saved models are retained, not promoted or
-rewritten by this change. Their old accuracy claims are not reliable: they used
-same-quarter indicators, hindsight recession/COVID flags, and test-derived
-ensemble weights. The new evaluation is a research backtest on revised data,
-not proof of real-time forecasting performance.
+As of 2026-10-20 the public dashboard and the forecast API endpoints no longer
+serve forecasts, ranges or accuracy figures. The page shows reported GDP growth
+history only, with an "under repair" notice. `/api/forecast`, `/api/metrics` and
+`/api/dashboard` return HTTP 503; `/api/history` still works. The legacy models
+in `models_saved/` are kept in the repository but are not served and not promoted.
+
+What was repaired: the input data. JP/IN/DE CPI and JP/DE industrial production
+now come from the official OECD SDMX API (`src/data/fetch_oecd_sdmx.py`) after the
+FRED mirrors froze, and the Japan and Germany leading index was replaced with the
+country-specific OECD CLI (the old file was identical for both countries and
+averaged many series per date). Each refresh is continuity-checked and recorded in
+`data/raw/SOURCES.json`. A freshness check (`python -m src.data.freshness`) fails
+on stale inputs and reports missing quarters and the share of rolling origins with
+data. The monthly workflow refreshes, checks, tests and evaluates candidates; it is
+read-only and never publishes.
+
+What is not solved: forecasting skill. Under a pre-set rule (selection window
+2010-2019, a candidate must beat the training mean by 3% RMSE with no worse MAE;
+the 3% margin is an analyst choice) no tested candidate beat the training mean for
+any of the four countries. That says these candidates did not show skill on this
+data and protocol, not that GDP cannot be forecast. The evaluation uses revised
+data, not real-time vintages, and the 2020+ window has been inspected repeatedly.
+The legacy accuracy claims were not reliable: they used same-quarter indicators,
+hindsight recession/COVID flags, and test-derived ensemble weights.
 
 ### Reproducible rolling results
 
@@ -62,8 +81,8 @@ claiming improved model quality. See `reports/legacy_metrics.json`,
 - A whitelist builds only embargoed GDP/indicator lags, lagged differences,
   shifted rolling stats and known calendar quarter. No raw current-quarter
   indicators, annual World Bank features, recession or COVID flags enter models.
-  Annual data backfill was also removed. The OECD leading index is excluded
-  pending verification of its raw series grouping.
+  Annual data backfill was also removed. The OECD leading index entered the
+  data only after being replaced with a country-specific series (see Status).
 - One shared implementation replaces the duplicated country trainers. The old
   pooled model entry point is retired until a panel-specific evaluation exists.
 - Two small LightGBM configurations, two ARMA orders and five blend weights
@@ -84,7 +103,7 @@ claiming improved model quality. See `reports/legacy_metrics.json`,
 A two-quarter offset is a conservative release assumption, not a verified
 historical availability calendar. GDP/indicators are latest revised values,
 not vintage observations; release delays and later revisions remain unmeasured.
-Latest source CSVs extend into 2026 Q2 and were not refreshed in this experiment.
+Source CSVs were refreshed on 2026-10-20 and extend to 2026 Q2 (see `data/raw/SOURCES.json`).
 GDP-unit provenance and all original source-series definitions still need an
 independent audit. No interval calibration, multi-horizon validation, deployment
 or live-data fetch was tested here. Legacy charts/screenshots are not evidence
@@ -122,6 +141,6 @@ models cannot consume the changed schema. `candidate_artifacts/` is ignored by g
 - `src/models/train_candidate.py`: isolated full-history research fits
 - `reports/`: reproducible rolling predictions and legacy comparison
 - `tests/`: causal invariance, embargo, split, selection and gate regressions
-- `frontend/`, `src/api/`, `models_saved/`: retained legacy deployment
+- `frontend/`, `src/api/`: history-only page and API (forecast endpoints paused); `models_saved/`: legacy models, not served
 
 Built by Yash Bajpai. See [LICENSE](LICENSE).
