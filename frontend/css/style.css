@@ -669,3 +669,23 @@ input:checked + .slider:before { transform: translateX(18px); }
     .card-top { flex-direction: column; align-items: flex-start; gap: 8px; }
     .badge { align-self: flex-start; }
 }
+
+/* Experimental status notice */
+.experiment-notice {
+    max-width: 900px;
+    margin: 0 auto 48px;
+    padding: 18px 22px;
+    border: 1px solid var(--border-color);
+    border-left: 4px solid var(--accent);
+    border-radius: 12px;
+    background: rgba(96, 165, 250, 0.07);
+    color: var(--text-main);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    text-align: left;
+}
+.experiment-notice a {
+    color: var(--accent);
+    text-decoration: underline;
+}
+.experiment-notice a:hover { color: var(--accent-hover); }

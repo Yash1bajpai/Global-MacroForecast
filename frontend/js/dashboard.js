@@ -98,7 +98,7 @@ function setApiStatus(state) {
             apiStatusBadge.classList.remove("api-fallback");
         }
     } else if (state === "fallback") {
-        apiStatusText.textContent = "Static Snapshot (API Asleep)";
+        apiStatusText.textContent = "Static Snapshot (Live API Unavailable)";
         if (apiStatusBadge) {
             apiStatusBadge.classList.add("api-fallback");
             apiStatusBadge.classList.remove("api-live");
@@ -112,7 +112,8 @@ function hasDashboardShape(data) {
         Array.isArray(data.forecast) && data.forecast.length > 0 &&
         typeof data.forecast[0]?.ensemble_pred === "number" &&
         data.history && Object.keys(data.history).length > 0 &&
-        data.metrics && typeof data.metrics.ensemble_rmse === "number"
+        data.metrics && typeof data.metrics.w_lgbm === "number" &&
+        typeof data.metrics.w_sarima === "number"
     );
 }
 
@@ -145,8 +146,7 @@ function renderCard(country, data) {
     }
     const valEl = document.getElementById("val-" + country);
     const trendEl = document.getElementById("trend-" + country);
-    const rmseEl = document.getElementById("rmse-" + country);
-    if (!valEl || !trendEl || !rmseEl) return;
+    if (!valEl || !trendEl) return;
 
     const nextQtr = data.forecast[0].ensemble_pred;
     valEl.textContent = (nextQtr > 0 ? "+" : "") + nextQtr.toFixed(2) + "%";
@@ -155,7 +155,12 @@ function renderCard(country, data) {
     const annRate = (Math.pow(1 + r, 4) - 1) * 100.0;
     setTrend(trendEl, annRate, nextQtr, false);
 
-    rmseEl.textContent = data.metrics.ensemble_rmse.toFixed(2) + "%";
+    const compEl = document.getElementById("comp-" + country);
+    if (compEl) {
+        // Round one side and derive the other so the pair always sums to 100.
+        const lgbmPct = Math.round(data.metrics.w_lgbm * 100);
+        compEl.textContent = `Model Composition: LightGBM ${lgbmPct}% | SARIMA ${100 - lgbmPct}%`;
+    }
 }
 
 // Best available data without waiting on the network.
