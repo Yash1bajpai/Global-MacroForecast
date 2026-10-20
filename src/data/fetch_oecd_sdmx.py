@@ -75,7 +75,7 @@ def _legacy_monthly(path):
 def refresh(raw_dir=None, specs=SPECS, fetcher=fetch_text):
     raw_dir = Path(raw_dir or ROOT / 'data/raw')
     sources_path = raw_dir / 'SOURCES.json'
-    sources = json.loads(sources_path.read_text()) if sources_path.exists() else {}
+    sources = json.loads(sources_path.read_text(encoding='utf-8')) if sources_path.exists() else {}
     for (country, name), (flow, key, desc) in specs.items():
         new = parse_sdmx_csv(fetcher(flow, key))
         path = raw_dir / country / f'{name}.csv'
@@ -96,7 +96,7 @@ def refresh(raw_dir=None, specs=SPECS, fetcher=fetch_text):
             entry['continuity_vs_replaced_file'] = rep
         new.rename('value').rename_axis('date').reset_index().to_csv(path, index=False)
         sources[f'{country}/{name}'] = entry
-    sources_path.write_text(json.dumps(sources, indent=2, sort_keys=True))
+    sources_path.write_text(json.dumps(sources, indent=2, sort_keys=True), encoding='utf-8')
     return sources
 
 

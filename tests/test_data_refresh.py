@@ -61,12 +61,12 @@ class WiringTests(unittest.TestCase):
     root = __import__('pathlib').Path(__file__).resolve().parents[1]
 
     def test_frozen_fred_ids_are_not_fetched(self):
-        text = (self.root / 'config/settings.py').read_text()
+        text = (self.root / 'config/settings.py').read_text(encoding='utf-8')
         for frozen in ('JPNCPIALLMINMEI', 'JPNPROINDMISMEI', 'DEUPROINDQISMEI', 'INDCPIALLMINMEI', 'DEUCPIALLMINMEI'):
             self.assertNotIn(f'"{frozen}"', text)
 
     def test_monthly_workflow_is_fail_closed_and_refreshes_before_preprocess(self):
-        wf = (self.root / '.github/workflows/auto_update.yml').read_text()
+        wf = (self.root / '.github/workflows/auto_update.yml').read_text(encoding='utf-8')
         self.assertLess(wf.index('src.data.fetch_oecd_sdmx'), wf.index('preprocess.py'))
         self.assertLess(wf.index('preprocess.py'), wf.index('src.data.freshness'))
         self.assertLess(wf.index('src.data.freshness'), wf.index('train_candidate'))
