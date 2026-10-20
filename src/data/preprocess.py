@@ -64,7 +64,11 @@ def load_csv(path):
 
 def to_quarterly(series, method="mean"):
     if method == "mean":
-        return series.resample("QS").mean()
+        # A quarter is only valid with all 3 months; a partial-quarter mean would
+        # silently look like a complete observation.
+        series = series.dropna()
+        counts = series.resample("QS").count()
+        return series.resample("QS").mean().where(counts == 3)
     return series.resample("QS").last()
 
 

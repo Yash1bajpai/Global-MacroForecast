@@ -18,20 +18,16 @@ jobs:
           python-version: '3.11'
           cache: pip
       - run: pip install -r requirements.txt
-      - name: Fetch and preprocess (never publish)
+      - name: Fetch sources (never publish)
         env:
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
-        run: |
-          python src/data/fetch_all.py
-          python src/data/preprocess.py
-      - name: Check data freshness
-        run: |
-          python - <<'PY'
-          import pandas as pd
-          for c in ['us', 'india', 'japan', 'germany']:
-              df = pd.read_csv(f'data/processed/{c}_master.csv', index_col=0, parse_dates=True)
-              assert df.index.max() >= pd.Timestamp.today().to_period('Q').start_time - pd.DateOffset(months=12), c
-          PY
+        run: python src/data/fetch_all.py
+      - name: Refresh OECD series (fails the job on error or discontinuity)
+        run: python -m src.data.fetch_oecd_sdmx
+      - name: Preprocess
+        run: python src/data/preprocess.py
+      - name: Check input freshness (fails on stale inputs)
+        run: python -m src.data.freshness
       - run: python -m unittest discover -s tests -v
       - name: Train isolated candidates
         run: python -m src.models.train_candidate --output candidate_artifacts
