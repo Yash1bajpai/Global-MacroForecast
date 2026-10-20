@@ -17,8 +17,6 @@ from sklearn.pipeline import make_pipeline
 ROOT = Path(__file__).resolve().parents[2]
 COUNTRIES = ['us', 'india', 'japan', 'germany']
 SEL_START, TEST_START = pd.Timestamp('2010-01-01'), pd.Timestamp('2020-01-01')
-STALE = {'india': ['cpi_level', 'cpi_growth'], 'japan': ['cpi_level', 'cpi_growth', 'indpro_level', 'indpro_growth'],
-         'germany': ['cpi_level', 'cpi_growth', 'indpro_level', 'indpro_growth']}
 IND = ['cpi_growth', 'indpro_growth', 'm2_growth', 'unrate', 'fed_funds_rate', 'interest_rate', 'brent_crude', 'sentiment', 'oecd_leading_index']
 
 def build(c):
@@ -28,7 +26,7 @@ def build(c):
     X['y2'] = y.shift(2); X['y3'] = y.shift(3); X['r4'] = y.shift(2).rolling(4).mean()
     ind = pd.DataFrame(index=m.index)
     for k in IND:
-        if k in m and k not in STALE.get(c, []) and m[k].last_valid_index() >= m.index[-1]:
+        if k in m and m[k].last_valid_index() >= m.index[-1]:  # only fully covered series
             ind[k + '_l2'] = m[k].shift(2)
     return y, X, ind
 
