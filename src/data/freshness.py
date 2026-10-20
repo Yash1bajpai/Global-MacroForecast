@@ -48,7 +48,7 @@ def availability_report(master, start=AVAILABILITY_START):
         if col not in LEVEL_COLS:
             continue
         s = master[col]
-        missing = [d.strftime('%Y-Q%q').replace('%q', str(d.quarter)) for d in window.index[s.loc[window.index].isna()]]
+        missing = [f'{d.year}-Q{d.quarter}' for d in window.index[s.loc[window.index].isna()]]
         origins = window.index[window.index >= start]
         have = s.shift(2).loc[origins].notna()
         out[col] = dict(missing_quarters=missing, origins=int(len(origins)),
